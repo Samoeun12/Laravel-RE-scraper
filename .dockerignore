@@ -1,0 +1,14 @@
+.git
+.github
+.env
+.env.backup
+.phpunit.result.cache
+vendor/
+node_modules/
+database/database.sqlite
+storage/logs/*.log
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+Homestead.json
+Homestead.yaml
