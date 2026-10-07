@@ -27,8 +27,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+    @php
+        $isLocalhost = in_array(request()->getHost(), ['127.0.0.1', 'localhost']);
+        $cssUrl = $isLocalhost ? asset('css/portal.css') : secure_asset('css/portal.css');
+        $jsUrl = $isLocalhost ? asset('js/portal.js') : secure_asset('js/portal.js');
+    @endphp
+
     <!-- Portal CSS -->
-    <link rel="stylesheet" href="{{ app()->environment('production') || request()->secure() ? secure_asset('css/portal.css') : asset('css/portal.css') }}">
+    <link rel="stylesheet" href="{{ $cssUrl }}">
     
     @stack('styles')
 </head>
@@ -36,7 +42,7 @@
     @yield('body')
 
     <!-- Portal JS -->
-    <script src="{{ app()->environment('production') || request()->secure() ? secure_asset('js/portal.js') : asset('js/portal.js') }}"></script>
+    <script src="{{ $jsUrl }}"></script>
     @stack('scripts')
 </body>
 </html>
