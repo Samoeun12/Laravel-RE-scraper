@@ -28,6 +28,14 @@ class RealEstateScraperService
             return $this->scrapeHarbor($task);
         }
 
+        if (str_contains($source, 'realestate') || str_contains($source, 'real estate portal')) {
+            return $this->scrapeRealestateComKh($task);
+        }
+
+        if (str_contains($source, 'propnex')) {
+            return $this->scrapePropNex($task);
+        }
+
         // Generic mock crawl simulation for other web crawlers
         $randomHarvest = rand(12, 35);
         $task->increment('items_scraped', $randomHarvest);
@@ -328,6 +336,250 @@ class RealEstateScraperService
                 'message' => "Scraped {$count} listings from Harbor Property API!",
             ];
         } catch (\Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Live Ingestion from Realestate.com.kh REST API.
+     */
+    public function scrapeRealestateComKh(?ScraperTask $task = null, int $limit = 50): array
+    {
+        try {
+            $url = "https://www.realestate.com.kh/api/portal/pages/results/?pathname=/buy/&page=1&page_size={$limit}&search_languages=en,km,zh-hans";
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+                'Accept' => 'application/json, text/plain, */*',
+                'Referer' => 'https://www.realestate.com.kh/buy/',
+            ])->timeout(20)->get($url);
+
+            if (!$response->successful()) {
+                throw new \Exception("Realestate.com.kh API error HTTP " . $response->status());
+            }
+
+            $data = $response->json();
+            $results = $data['results'] ?? [];
+            $count = 0;
+
+            foreach ($results as $it) {
+                $pid = (string) ($it['id'] ?? uniqid());
+                $title = trim($it['headline'] ?? $it['title_img_alt'] ?? "Realestate.com.kh Property {$pid}");
+                if (empty($title) || strlen($title) < 3) {
+                    continue;
+                }
+
+                $rawLtype = strtolower((string) ($it['listing_type'] ?? ''));
+                $dispRent = trim((string) ($it['display_rent'] ?? ''));
+                $dispPrice = trim((string) ($it['display_price'] ?? ''));
+
+                if (str_contains($rawLtype, 'rent') || ($dispRent && $dispRent !== 'POA' && (!$dispPrice || $dispPrice === 'POA'))) {
+                    $listingType = 'Rent';
+                    $priceStr = $dispRent;
+                } else {
+                    $listingType = 'Sale';
+                    $priceStr = $dispPrice ?: $dispRent;
+                }
+
+                $price = null;
+                if ($priceStr && $priceStr !== 'POA') {
+                    $cleanP = preg_replace('/[^0-9.]/', '', str_replace(',', '', $priceStr));
+                    if (is_numeric($cleanP)) {
+                        $price = (float) $cleanP;
+                    }
+                }
+
+                $bedrooms = null;
+                $bathrooms = null;
+                $landArea = null;
+                $floorArea = null;
+
+                $specs = $it['specifications']['detail'] ?? [];
+                foreach ($specs as $spec) {
+                    $stype = $spec['type'] ?? '';
+                    $slabel = $spec['label'] ?? '';
+                    if ($stype === 'bedrooms' && preg_match('/(\d+)/', $slabel, $m)) {
+                        $bedrooms = (int) $m[1];
+                    } elseif ($stype === 'bathrooms' && preg_match('/(\d+)/', $slabel, $m)) {
+                        $bathrooms = (int) $m[1];
+                    } elseif ($stype === 'land_area' && preg_match('/(\d+(?:[.,]\d+)?)/', $slabel, $m)) {
+                        $landArea = (float) str_replace(',', '', $m[1]);
+                    } elseif ($stype === 'floor_area' && preg_match('/(\d+(?:[.,]\d+)?)/', $slabel, $m)) {
+                        $floorArea = (float) str_replace(',', '', $m[1]);
+                    }
+                }
+
+                $propType = $it['category_name'] ?? 'House';
+                $area = ($propType === 'Land') ? ($landArea ?: $floorArea) : ($floorArea ?: $landArea);
+                $sqmPrice = ($price && $area && $area > 0) ? round($price / $area, 2) : null;
+
+                $rawAddress = trim((string) ($it['address'] ?? ''));
+                $province = 'Phnom Penh';
+                $district = null;
+                if (!empty($rawAddress)) {
+                    $parts = array_map('trim', explode(',', $rawAddress));
+                    if (count($parts) >= 2) {
+                        $district = $parts[count($parts) - 2];
+                        $province = end($parts);
+                    } else {
+                        $province = $parts[0];
+                    }
+                }
+
+                $imageUrl = $it['images'][0]['url'] ?? 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80';
+                $propertyUrl = !empty($it['url']) ? (str_starts_with($it['url'], 'http') ? $it['url'] : 'https://www.realestate.com.kh' . $it['url']) : "https://www.realestate.com.kh/property/{$pid}";
+
+                Property::updateOrCreate(
+                    ['url' => $propertyUrl],
+                    [
+                        'source' => 'realestate',
+                        'source_name' => 'Realestate.com.kh',
+                        'source_id' => $pid,
+                        'title' => $title,
+                        'property_type' => $propType,
+                        'listing_type' => $listingType,
+                        'price_usd' => $price,
+                        'price' => $price,
+                        'currency' => 'USD',
+                        'area_sqm' => $area,
+                        'price_per_sqm' => $sqmPrice,
+                        'province' => $province ?: 'Phnom Penh',
+                        'district' => $district,
+                        'location' => $rawAddress ?: ($district ? "{$district}, {$province}" : $province),
+                        'city' => $province ?: 'Phnom Penh',
+                        'bedrooms' => $bedrooms,
+                        'bathrooms' => $bathrooms,
+                        'latitude' => !empty($it['address_latitude']) ? (float) $it['address_latitude'] : null,
+                        'longitude' => !empty($it['address_longitude']) ? (float) $it['address_longitude'] : null,
+                        'image_url' => $imageUrl,
+                        'status' => 'available',
+                        'scraper_task_id' => $task ? $task->id : null,
+                    ]
+                );
+                $count++;
+            }
+
+            if ($task) {
+                $task->increment('items_scraped', $count);
+                $task->update([
+                    'status' => 'completed',
+                    'last_run_at' => now(),
+                    'last_log' => "Direct Realestate.com.kh REST API sync completed. Ingested {$count} records.",
+                ]);
+            }
+
+            return [
+                'success' => true,
+                'source' => 'Realestate.com.kh',
+                'count' => $count,
+                'message' => "Successfully harvested {$count} live listings from Realestate.com.kh REST API!",
+            ];
+        } catch (\Throwable $e) {
+            Log::error("Realestate.com.kh Scraper Error: " . $e->getMessage());
+            if ($task) {
+                $task->update(['last_log' => 'Realestate.com.kh sync warning: ' . $e->getMessage()]);
+            }
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Live Ingestion from PropNex Cambodia OpenAPI REST API.
+     */
+    public function scrapePropNex(?ScraperTask $task = null, int $limit = 50): array
+    {
+        try {
+            $url = "https://www.propnexkh.com/api/v1/properties?page=1&page_size={$limit}";
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+                'Accept' => 'application/json',
+            ])->timeout(20)->get($url);
+
+            if (!$response->successful()) {
+                throw new \Exception("PropNex API error HTTP " . $response->status());
+            }
+
+            $data = $response->json();
+            $list = $data['data']['list'] ?? [];
+            $count = 0;
+
+            foreach ($list as $item) {
+                $pid = (string) ($item['id'] ?? uniqid());
+                $title = trim($item['name'] ?? "PropNex Property {$pid}");
+                if (empty($title)) {
+                    continue;
+                }
+
+                $rawLtype = strtolower((string) ($item['listing_type'] ?? 'sale'));
+                $listingType = ($rawLtype === 'rent') ? 'Rent' : 'Sale';
+
+                $price = !empty($item['expected_price']) ? (float) $item['expected_price'] : (!empty($item['rent_per_month']) ? (float) $item['rent_per_month'] : null);
+                $carpetArea = !empty($item['carpet_area']) ? (float) $item['carpet_area'] : null;
+                $landArea = !empty($item['land_area']) ? (float) $item['land_area'] : null;
+                $area = $carpetArea ?: $landArea;
+                $sqmPrice = ($price && $area && $area > 0) ? round($price / $area, 2) : null;
+
+                $propType = $item['property_type_name'] ?? 'House';
+
+                $imgRel = $item['images'][0]['url'] ?? null;
+                $imageUrl = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80';
+                if ($imgRel) {
+                    $imageUrl = str_starts_with($imgRel, 'http') ? $imgRel : 'https://www.propnexkh.com' . $imgRel;
+                }
+
+                $propertyUrl = "https://www.propnexkh.com/property/{$pid}";
+                $province = $item['province_name'] ?? 'Phnom Penh';
+                $district = $item['district_name'] ?? 'Chamkar Mon';
+
+                Property::updateOrCreate(
+                    ['url' => $propertyUrl],
+                    [
+                        'source' => 'propnex',
+                        'source_name' => 'PropNex Cambodia',
+                        'source_id' => $pid,
+                        'title' => $title,
+                        'property_type' => $propType,
+                        'listing_type' => $listingType,
+                        'price_usd' => $price,
+                        'price' => $price,
+                        'currency' => 'USD',
+                        'area_sqm' => $area,
+                        'price_per_sqm' => $sqmPrice,
+                        'province' => $province,
+                        'district' => $district,
+                        'location' => "{$district}, {$province}",
+                        'city' => $province,
+                        'bedrooms' => !empty($item['bedrooms']) ? (int) $item['bedrooms'] : null,
+                        'bathrooms' => !empty($item['bathrooms']) ? (int) $item['bathrooms'] : null,
+                        'latitude' => !empty($item['latitude']) ? (float) $item['latitude'] : null,
+                        'longitude' => !empty($item['longitude']) ? (float) $item['longitude'] : null,
+                        'image_url' => $imageUrl,
+                        'status' => 'available',
+                        'scraper_task_id' => $task ? $task->id : null,
+                    ]
+                );
+                $count++;
+            }
+
+            if ($task) {
+                $task->increment('items_scraped', $count);
+                $task->update([
+                    'status' => 'completed',
+                    'last_run_at' => now(),
+                    'last_log' => "Direct PropNex REST API sync completed. Ingested {$count} records.",
+                ]);
+            }
+
+            return [
+                'success' => true,
+                'source' => 'PropNex Cambodia',
+                'count' => $count,
+                'message' => "Successfully harvested {$count} live listings from PropNex Cambodia REST API!",
+            ];
+        } catch (\Throwable $e) {
+            Log::error("PropNex Scraper Error: " . $e->getMessage());
+            if ($task) {
+                $task->update(['last_log' => 'PropNex sync warning: ' . $e->getMessage()]);
+            }
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }

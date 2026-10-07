@@ -95,6 +95,16 @@ class DatabaseSeeder extends Seeder
                 'items_scraped' => 85,
                 'last_log' => 'Harbor API verified.',
             ],
+            [
+                'name' => 'PropNex Cambodia (Direct OpenAPI)',
+                'source_name' => 'PropNex Cambodia',
+                'target_url' => 'https://www.propnexkh.com/api/v1/properties',
+                'category' => 'Borey & Luxury Residential',
+                'status' => 'completed',
+                'frequency' => 'Every 4 Hours',
+                'items_scraped' => 50,
+                'last_log' => 'OpenAPI v1 endpoint connected. Borey and villa inventory parsed.',
+            ],
         ];
 
         foreach ($scrapers as $s) {

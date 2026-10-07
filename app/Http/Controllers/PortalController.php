@@ -46,6 +46,7 @@ class PortalController extends Controller
             'khmer24' => ['name' => 'Khmer24 Property', 'color' => '#f59e0b'],
             'arc' => ['name' => 'ARC Cambodia (PMS)', 'color' => '#10b981'],
             'realestate' => ['name' => 'Realestate.com.kh', 'color' => '#8b5cf6'],
+            'propnex' => ['name' => 'PropNex Cambodia (API)', 'color' => '#ec4899'],
             'harbor' => ['name' => 'Harbor Property', 'color' => '#06b6d4'],
         ];
 

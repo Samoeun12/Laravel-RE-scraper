@@ -35,12 +35,13 @@
             <!-- Portal Source Filter -->
             <div style="flex: 1; min-width: 150px;">
                 <select name="source" class="form-control" onchange="this.form.submit()">
-                    <option value="">All 5 Portals</option>
-                    <option value="cambodia_re" {{ request('source') == 'cambodia_re' ? 'selected' : '' }}>Century 21 (C21)</option>
-                    <option value="arc" {{ request('source') == 'arc' ? 'selected' : '' }}>ARC Cambodia</option>
+                    <option value="">All Portals (6 Sources)</option>
+                    <option value="cambodia_re" {{ request('source') == 'cambodia_re' ? 'selected' : '' }}>Century 21 (C21 API)</option>
+                    <option value="arc" {{ request('source') == 'arc' ? 'selected' : '' }}>ARC Cambodia (API)</option>
+                    <option value="propnex" {{ request('source') == 'propnex' ? 'selected' : '' }}>PropNex Cambodia (API)</option>
+                    <option value="realestate" {{ request('source') == 'realestate' ? 'selected' : '' }}>Realestate.com.kh (API)</option>
                     <option value="khmer24" {{ request('source') == 'khmer24' ? 'selected' : '' }}>Khmer24 Property</option>
-                    <option value="realestate" {{ request('source') == 'realestate' ? 'selected' : '' }}>Realestate.com.kh</option>
-                    <option value="harbor" {{ request('source') == 'harbor' ? 'selected' : '' }}>Harbor Property</option>
+                    <option value="harbor" {{ request('source') == 'harbor' ? 'selected' : '' }}>Harbor Property (API)</option>
                 </select>
             </div>
 

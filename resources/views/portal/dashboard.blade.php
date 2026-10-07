@@ -12,7 +12,7 @@
             <div>
                 <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: var(--bg-surface); padding: 4px 12px; border-radius: var(--radius-full); border: 1px solid var(--border-color); font-size: 0.775rem; font-weight: 700; color: var(--primary); margin-bottom: 0.75rem;">
                     <span class="badge-dot" style="background: var(--success); box-shadow: 0 0 10px var(--success); animation: pulse 1.5s infinite;"></span>
-                    Live Ingestion Cluster Online &bull; 5 Cambodian Portals Active
+                    Live Ingestion Cluster Online &bull; {{ count($portalDistribution) }} Cambodian Portals Active
                 </div>
                 
                 <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.025em; color: var(--text-primary); margin-bottom: 0.35rem;">
@@ -85,11 +85,11 @@
         <div class="stat-label">Total Real Estate Cataloged</div>
         <!-- Multi-portal color bar -->
         <div style="height: 4px; border-radius: var(--radius-full); background: var(--bg-surface-elevated); margin-top: 1rem; overflow: hidden; display: flex;">
-            <div style="width: 44%; background: #3b82f6;" title="Century 21"></div>
-            <div style="width: 27%; background: #f59e0b;" title="Khmer24"></div>
-            <div style="width: 15%; background: #10b981;" title="ARC Cambodia"></div>
-            <div style="width: 13%; background: #8b5cf6;" title="Realestate.com.kh"></div>
-            <div style="width: 1%; background: #06b6d4;" title="Harbor Property"></div>
+            @foreach($portalDistribution as $p)
+                @if($p['percentage'] > 0)
+                    <div style="width: {{ $p['percentage'] }}%; background: {{ $p['color'] }};" title="{{ $p['name'] }}: {{ $p['percentage'] }}%"></div>
+                @endif
+            @endforeach
         </div>
     </div>
 
