@@ -28,7 +28,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Portal CSS -->
-    <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
+    <link rel="stylesheet" href="{{ app()->environment('production') || request()->secure() ? secure_asset('css/portal.css') : asset('css/portal.css') }}">
     
     @stack('styles')
 </head>
@@ -36,7 +36,7 @@
     @yield('body')
 
     <!-- Portal JS -->
-    <script src="{{ asset('js/portal.js') }}"></script>
+    <script src="{{ app()->environment('production') || request()->secure() ? secure_asset('js/portal.js') : asset('js/portal.js') }}"></script>
     @stack('scripts')
 </body>
 </html>
