@@ -729,6 +729,19 @@ img {
     }
 }
 
+.analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 960px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .card {
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);

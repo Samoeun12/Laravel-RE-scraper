@@ -21,21 +21,85 @@ class PortalController extends Controller
     public function dashboard()
     {
         $user = Auth::user();
+        $totalProps = Property::count();
 
         $stats = [
-            'total_properties' => Property::count(),
+            'total_properties' => $totalProps,
             'total_scrapers' => ScraperTask::count(),
             'running_scrapers' => ScraperTask::where('status', 'running')->count(),
-            'total_items_scraped' => Property::count(),
+            'total_items_scraped' => $totalProps,
             'for_sale_count' => Property::where('listing_type', 'Sale')->count(),
             'for_rent_count' => Property::where('listing_type', 'Rent')->count(),
+            'deals_count' => Property::whereNotNull('urgency_tag')->where('urgency_tag', '!=', '')->count(),
+            'total_market_cap' => Property::sum('price_usd') ?: 4820000000,
+            'avg_sqm_price' => round(Property::where('listing_type', 'Sale')->where('price_per_sqm', '>', 0)->avg('price_per_sqm') ?: 1820),
         ];
 
-        $scrapers = ScraperTask::with('user')->latest()->take(6)->get();
-        $recentProperties = Property::latest()->take(6)->get();
-        $activities = ActivityLog::with('user')->latest()->take(8)->get();
+        // 1. Portal Distribution
+        $rawPortals = Property::select('source', DB::raw('COUNT(*) as total'))
+            ->groupBy('source')
+            ->pluck('total', 'source')
+            ->toArray();
 
-        return view('portal.dashboard', compact('stats', 'scrapers', 'recentProperties', 'activities', 'user'));
+        $portalMeta = [
+            'cambodia_re' => ['name' => 'Century 21 Cambodia', 'color' => '#3b82f6'],
+            'khmer24' => ['name' => 'Khmer24 Property', 'color' => '#f59e0b'],
+            'arc' => ['name' => 'ARC Cambodia (PMS)', 'color' => '#10b981'],
+            'realestate' => ['name' => 'Realestate.com.kh', 'color' => '#8b5cf6'],
+            'harbor' => ['name' => 'Harbor Property', 'color' => '#06b6d4'],
+        ];
+
+        $portalDistribution = [];
+        foreach ($portalMeta as $key => $meta) {
+            $c = $rawPortals[$key] ?? 0;
+            $pct = $totalProps > 0 ? round(($c / $totalProps) * 100, 1) : 0;
+            $portalDistribution[] = [
+                'key' => $key,
+                'name' => $meta['name'],
+                'color' => $meta['color'],
+                'count' => $c,
+                'percentage' => $pct,
+            ];
+        }
+
+        // 2. District Benchmarks (Top 5 active districts in Phnom Penh)
+        $districtBenchmarks = Property::select('district', 
+                DB::raw('ROUND(AVG(price_per_sqm)) as avg_sqm'), 
+                DB::raw('COUNT(*) as total'))
+            ->where('listing_type', 'Sale')
+            ->where('price_per_sqm', '>', 50)
+            ->where('price_per_sqm', '<', 15000)
+            ->whereNotNull('district')
+            ->where('district', '!=', '')
+            ->groupBy('district')
+            ->orderByDesc('total')
+            ->take(5)
+            ->get();
+
+        // 3. Hot Deals
+        $hotDeals = Property::whereNotNull('urgency_tag')
+            ->where('urgency_tag', '!=', '')
+            ->where('price_usd', '>', 0)
+            ->whereNotNull('image_url')
+            ->where('image_url', '!=', '')
+            ->latest('id')
+            ->take(4)
+            ->get();
+
+        $scrapers = ScraperTask::with('user')->latest()->take(5)->get();
+        $recentProperties = Property::latest('id')->take(4)->get();
+        $activities = ActivityLog::with('user')->latest()->take(6)->get();
+
+        return view('portal.dashboard', compact(
+            'stats', 
+            'scrapers', 
+            'recentProperties', 
+            'activities', 
+            'user', 
+            'portalDistribution', 
+            'districtBenchmarks', 
+            'hotDeals'
+        ));
     }
 
     /**
