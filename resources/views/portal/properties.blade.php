@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <h1 class="page-title">Real Estate Properties Directory</h1>
-        <p class="page-subtitle">Indexed listings scraped from Cambodia's 5 premier real estate marketplaces ({{ number_format($properties->total()) }} total)</p>
+        <p class="page-subtitle">Harvested listings across Cambodia's leading real estate portals via live direct APIs ({{ number_format($properties->total()) }} total)</p>
     </div>
     <div>
         <button type="button" class="btn btn-primary" onclick="openModal('modal-add-property')">

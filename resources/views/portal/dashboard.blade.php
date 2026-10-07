@@ -78,7 +78,7 @@
             </div>
             <span class="stat-trend up">
                 <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-                5 Portals Unified
+                {{ count($portalDistribution) }} Portals Unified
             </span>
         </div>
         <div class="stat-value">{{ number_format($stats['total_properties']) }}</div>
@@ -107,7 +107,7 @@
             </span>
         </div>
         <div class="stat-value">{{ $stats['total_scrapers'] }} Crawlers</div>
-        <div class="stat-label">C21, ARC, Harbor, Khmer24, Realestate</div>
+        <div class="stat-label">C21, PropNex, ARC, Harbor, Realestate</div>
         <div style="margin-top: 0.85rem; font-size: 0.775rem; color: var(--text-muted);">
             Direct REST API sub-second response: <strong style="color:var(--success);">210ms</strong>
         </div>
