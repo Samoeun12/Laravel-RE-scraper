@@ -41,6 +41,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/properties', [PortalController::class, 'storeProperty'])->name('properties.store');
         Route::delete('/properties/{id}', [PortalController::class, 'deleteProperty'])->name('properties.delete');
 
+        // Market Intelligence & Valuation Tools (from Python Scraper Tool)
+        Route::get('/deals', [PortalController::class, 'deals'])->name('deals');
+        Route::get('/cma', [PortalController::class, 'cma'])->name('cma');
+        Route::get('/land-estimator', [PortalController::class, 'landEstimator'])->name('land_estimator');
+
         // Profile & Settings
         Route::get('/profile', [PortalController::class, 'profile'])->name('profile');
         Route::post('/profile', [PortalController::class, 'updateProfile'])->name('profile.update');

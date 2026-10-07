@@ -1,0 +1,68 @@
+==============================================================================
+🏢 CAMBODIA REAL ESTATE INTELLIGENCE & VALUATION TOOL - RUN GUIDE
+==============================================================================
+
+1. 🚀 QUICK START (Run Dashboard)
+------------------------------------------------------------------------------
+Open PowerShell or Terminal in this folder (e:\Python Test\Tool Scrap Data RE):
+
+  streamlit run app.py
+
+* If 'streamlit' is not recognized in your PATH, run:
+  python -m streamlit run app.py
+
+The dashboard will open automatically in your browser at:
+  👉 http://localhost:8501
+
+
+2. 🛑 HOW TO STOP THE APP
+------------------------------------------------------------------------------
+In the PowerShell/terminal window where the app is running:
+  Press:  Ctrl + C
+  (Wait 1-2 seconds for the server to stop)
+
+
+3. 📦 FIRST-TIME SETUP & PREREQUISITES
+------------------------------------------------------------------------------
+If you are running on a new computer or virtual environment:
+
+Step 1: Install Python dependencies
+  pip install -r requirements.txt
+
+Step 2: Install Playwright Chromium browser (required for Khmer24)
+  playwright install chromium
+
+
+4. 💡 COMMON ISSUES & TROUBLESHOOTING
+------------------------------------------------------------------------------
+Issue A: Warning "missing ScriptRunContext!"
+  Cause: You ran 'python app.py'. Streamlit apps cannot be run with standard python.
+  Fix:   Always run with:  streamlit run app.py  (or python -m streamlit run app.py)
+
+Issue B: Port 8501 is already in use
+  Fix:   Run on a different port:
+         streamlit run app.py --server.port 8502
+
+Issue C: Scraping timeout on Khmer24
+  Cause: Headless browser waiting for network idle on slow overseas servers.
+  Fix:   Scrapers will skip timed-out pages and keep previously collected listings.
+         Portals using Direct REST APIs (ARC, Harbor Property, and C21) run ultra-fast
+         and never suffer browser timeouts.
+
+Issue D: Database location
+  All listings, deduplication records, and metrics are saved locally in:
+  e:\Python Test\Tool Scrap Data RE\properties.db
+
+
+5. 🌟 SUMMARY OF WORKSPACES IN ENTERPRISE PORTAL
+------------------------------------------------------------------------------
+• Workspace 1: 🌐 Command Center (Executive KPI Dashboard, Portal Sync Matrix, Quick Launchers, Live Ingestion Stream)
+• Workspace 2: 🕷️ Scraping Operations (Multi-Portal REST & Playwright Harvester with Scrape Execution Audit Logs)
+• Workspace 3: 📋 MLS Property Explorer (Interactive Grid with Khmer Typography, Responsive Cards, Leaflet Cluster Map, CSV/Excel Export)
+• Workspace 4: ⚖️ CMA Valuation Studio (Automated Comparative Market Analysis with Conservative, Fair Market, Premium Estimates)
+• Workspace 5: 💎 Deal Finder & Screener (Below-Market Arbitrage Radar filtering 15% to 40%+ discounts & urgent sales)
+• Workspace 6: 📐 Land Price Estimator (Empirical land appraisal model by road grade, frontage & district benchmark index)
+• Workspace 7: 📊 Market Intelligence Hub (Price-per-sqm heatmaps, rental yields, and portal volume distributions)
+• Workspace 8: ⚙️ Database & System Console (Database telemetry, SQLite VACUUM optimization, duplicate cleanup & log audit)
+
+==============================================================================

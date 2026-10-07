@@ -16,9 +16,9 @@ return new class extends Migration
         Schema::create('scraper_tasks', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('source_name'); // e.g., 'Realestate.com.kh', 'Khmer24', 'Zillow'
+            $table->string('source_name'); // e.g., 'Realestate.com.kh', 'Khmer24', 'Harbor Property', 'ARC Cambodia', 'Century 21'
             $table->string('target_url');
-            $table->string('category')->default('Condo'); // Condo, Villa, Land, Commercial
+            $table->string('category')->default('Condo'); // Condo, Villa, Land, Commercial, etc.
             $table->string('status')->default('idle'); // idle, running, completed, error
             $table->string('frequency')->default('Every 6 Hours');
             $table->integer('items_scraped')->default(0);
@@ -30,20 +30,32 @@ return new class extends Migration
 
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->string('property_type'); // Condo, Apartment, Villa, Land, Office
-            $table->string('listing_type')->default('Sale'); // Sale, Rent
-            $table->decimal('price', 15, 2);
-            $table->string('currency')->default('USD');
-            $table->string('location');
-            $table->string('city')->default('Phnom Penh');
-            $table->integer('bedrooms')->default(1);
-            $table->integer('bathrooms')->default(1);
-            $table->float('area_sqm')->nullable();
+            $table->string('source')->default('manual')->index();
             $table->string('source_name')->default('Manual');
-            $table->string('source_url')->nullable();
-            $table->string('image_url')->nullable();
-            $table->string('status')->default('available'); // available, pending, sold, rented
+            $table->string('source_id')->nullable();
+            $table->text('title');
+            $table->string('property_type')->default('Other')->index();
+            $table->string('listing_type')->default('Sale')->index();
+            $table->decimal('price_usd', 15, 2)->nullable()->index();
+            $table->decimal('price', 15, 2)->nullable();
+            $table->string('currency')->default('USD');
+            $table->float('area_sqm')->nullable()->index();
+            $table->float('price_per_sqm')->nullable()->index();
+            $table->string('province')->nullable()->index();
+            $table->string('district')->nullable()->index();
+            $table->string('commune')->nullable();
+            $table->text('address')->nullable();
+            $table->string('location')->nullable();
+            $table->string('city')->nullable();
+            $table->integer('bedrooms')->nullable();
+            $table->integer('bathrooms')->nullable();
+            $table->text('url')->nullable();
+            $table->text('source_url')->nullable();
+            $table->text('image_url')->nullable();
+            $table->string('urgency_tag')->nullable()->index();
+            $table->string('status')->default('available')->index();
+            $table->double('latitude')->nullable();
+            $table->double('longitude')->nullable();
             $table->boolean('is_featured')->default(false);
             $table->foreignId('scraper_task_id')->nullable()->constrained('scraper_tasks')->nullOnDelete();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
