@@ -106,7 +106,7 @@ html {
 }
 
 body {
-    font-family: 'Plus Jakarta Sans', 'Kantumruy Pro', 'Noto Sans Khmer', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Battambang', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: var(--bg-base);
     color: var(--text-primary);
     line-height: 1.55;
@@ -115,7 +115,7 @@ body {
 }
 
 .font-khmer {
-    font-family: 'Kantumruy Pro', 'Noto Sans Khmer', 'Plus Jakarta Sans', sans-serif !important;
+    font-family: 'Battambang', 'Plus Jakarta Sans', sans-serif !important;
 }
 
 a {
@@ -124,7 +124,7 @@ a {
 }
 
 button, input, select, textarea {
-    font-family: 'Plus Jakarta Sans', 'Kantumruy Pro', 'Noto Sans Khmer', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Battambang', system-ui, sans-serif;
     font-size: inherit;
     color: inherit;
     border: none;
