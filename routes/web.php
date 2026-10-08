@@ -36,10 +36,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/scrapers/{id}/trigger', [PortalController::class, 'triggerScraper'])->name('scrapers.trigger');
         Route::delete('/scrapers/{id}', [PortalController::class, 'deleteScraper'])->name('scrapers.delete');
 
-        // Properties
+        // Properties / Listings
         Route::get('/properties', [PortalController::class, 'properties'])->name('properties');
         Route::post('/properties', [PortalController::class, 'storeProperty'])->name('properties.store');
         Route::delete('/properties/{id}', [PortalController::class, 'deleteProperty'])->name('properties.delete');
+
+        // Listings Map (Full Google Map with Live Property Pins & Clusters)
+        Route::get('/map', [PortalController::class, 'map'])->name('map');
+        Route::get('/api/map-properties', [PortalController::class, 'mapPropertiesApi'])->name('map.api');
 
         // Market Intelligence & Valuation Tools (from Python Scraper Tool)
         Route::get('/deals', [PortalController::class, 'deals'])->name('deals');

@@ -1,14 +1,20 @@
 @extends('layouts.portal')
 
-@section('title', 'Properties Catalog')
+@section('title', 'Real Estate Listings')
 
 @section('content')
 <div class="page-header">
     <div>
-        <h1 class="page-title">Real Estate Properties Directory</h1>
+        <h1 class="page-title">Real Estate Listings</h1>
         <p class="page-subtitle">Harvested listings across Cambodia's leading real estate portals via live direct APIs ({{ number_format($properties->total()) }} total)</p>
     </div>
-    <div>
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <a href="{{ route('portal.map') }}" class="btn btn-secondary">
+            <svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            <span>Listings Map</span>
+        </a>
         <button type="button" class="btn btn-primary" onclick="openModal('modal-add-property')">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

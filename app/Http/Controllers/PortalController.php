@@ -244,6 +244,145 @@ class PortalController extends Controller
     }
 
     /**
+     * Listings Map View (Full Google Map with Live Property Pins & Clusters).
+     */
+    public function map(Request $request)
+    {
+        $provinces = Property::whereNotNull('province')->where('province', '!=', '')->distinct()->pluck('province')->take(15);
+        $propertyTypes = Property::whereNotNull('property_type')->where('property_type', '!=', '')->distinct()->pluck('property_type');
+        $sources = Property::whereNotNull('source')->where('source', '!=', '')->distinct()->pluck('source');
+        $totalWithGps = Property::whereNotNull('latitude')->whereNotNull('longitude')->count();
+
+        return view('portal.map', compact('provinces', 'propertyTypes', 'sources', 'totalWithGps'));
+    }
+
+    /**
+     * Live JSON data endpoint for interactive Google Map.
+     */
+    public function mapPropertiesApi(Request $request)
+    {
+        $query = Property::query();
+
+        $query->whereNotNull('latitude')
+              ->whereNotNull('longitude')
+              ->where('latitude', '>', 9.0)
+              ->where('latitude', '<', 15.5)
+              ->where('longitude', '>', 102.0)
+              ->where('longitude', '<', 108.0);
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%")
+                  ->orWhere('city', 'like', "%{$search}%")
+                  ->orWhere('district', 'like', "%{$search}%")
+                  ->orWhere('province', 'like', "%{$search}%")
+                  ->orWhere('source_name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($source = $request->input('source')) {
+            $query->where('source', $source);
+        }
+
+        if ($type = $request->input('type')) {
+            $query->where('property_type', $type);
+        }
+
+        if ($listingType = $request->input('listing_type')) {
+            $query->where('listing_type', $listingType);
+        }
+
+        if ($province = $request->input('province')) {
+            $query->where('province', 'like', "%{$province}%");
+        }
+
+        if ($minPrice = $request->input('min_price')) {
+            $query->where('price_usd', '>=', (float) $minPrice);
+        }
+
+        if ($maxPrice = $request->input('max_price')) {
+            $query->where('price_usd', '<=', (float) $maxPrice);
+        }
+
+        $totalMatching = (clone $query)->count();
+        $limit = min((int) ($request->input('limit', 1200)), 2000);
+
+        $properties = $query->latest('id')
+            ->take($limit)
+            ->get([
+                'id',
+                'title',
+                'property_type',
+                'listing_type',
+                'price_usd',
+                'price',
+                'area_sqm',
+                'price_per_sqm',
+                'location',
+                'district',
+                'province',
+                'bedrooms',
+                'bathrooms',
+                'latitude',
+                'longitude',
+                'image_url',
+                'url',
+                'source',
+                'source_name',
+                'urgency_tag',
+            ]);
+
+        $defaultImg = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80';
+
+        $data = $properties->map(function ($item) use ($defaultImg) {
+            $priceText = $item->formatted_price;
+            $shortPrice = $item->price_usd > 0 
+                ? ($item->price_usd >= 1000000 
+                    ? '$' . round($item->price_usd / 1000000, 2) . 'M' 
+                    : ($item->price_usd >= 1000 
+                        ? '$' . round($item->price_usd / 1000, 1) . 'k' 
+                        : '$' . number_format($item->price_usd, 0)))
+                : 'N/A';
+            
+            if (strtolower($item->listing_type ?? '') === 'rent' && $shortPrice !== 'N/A') {
+                $shortPrice .= '/mo';
+            }
+
+            return [
+                'id' => $item->id,
+                'title' => $item->title,
+                'property_type' => $item->property_type,
+                'listing_type' => $item->listing_type,
+                'price_usd' => $item->price_usd,
+                'formatted_price' => $priceText,
+                'short_price' => $shortPrice,
+                'area_sqm' => $item->area_sqm,
+                'computed_price_per_sqm' => $item->computed_price_per_sqm,
+                'location' => $item->display_location,
+                'district' => $item->district,
+                'province' => $item->province,
+                'bedrooms' => $item->bedrooms,
+                'bathrooms' => $item->bathrooms,
+                'lat' => (float) $item->latitude,
+                'lng' => (float) $item->longitude,
+                'image' => $item->image_url ?: $defaultImg,
+                'url' => $item->url,
+                'source' => $item->source,
+                'source_name' => $item->source_name,
+                'urgency_tag' => $item->urgency_tag,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'count' => $data->count(),
+            'total_matching' => $totalMatching,
+            'properties' => $data,
+        ]);
+    }
+
+    /**
      * Deal & Good Property Finder.
      * Identifies listings with urgency tags or prices below district median $/sqm.
      */
