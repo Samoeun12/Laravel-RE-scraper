@@ -25,22 +25,44 @@
 
             <!-- Quick Action Command Buttons -->
             <div style="display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: center;">
-                <a href="{{ route('portal.deals') }}" class="btn btn-primary" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    <span>Deal Finder</span>
-                </a>
-                <a href="{{ route('portal.cma') }}" class="btn btn-secondary">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                    <span>CMA Valuation</span>
-                </a>
-                <a href="{{ route('portal.land_estimator') }}" class="btn btn-secondary">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-                    <span>Land Estimator</span>
-                </a>
-                <button type="button" class="btn btn-secondary" onclick="openModal('modal-new-scraper')">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                    <span>New Scraper</span>
-                </button>
+                @if(Auth::user()->hasPermission('valuation.deals'))
+                    <a href="{{ route('portal.deals') }}" class="btn btn-primary" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        <span>Deal Finder</span>
+                    </a>
+                @endif
+
+                @if(Auth::user()->hasPermission('valuation.cma'))
+                    <a href="{{ route('portal.cma') }}" class="btn btn-secondary">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                        <span>CMA Valuation</span>
+                    </a>
+                @endif
+
+                @if(Auth::user()->hasPermission('valuation.land'))
+                    <a href="{{ route('portal.land_estimator') }}" class="btn btn-secondary">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+                        <span>Land Estimator</span>
+                    </a>
+                @endif
+
+                @if(Auth::user()->hasPermission('properties.view'))
+                    <a href="{{ route('portal.properties') }}" class="btn btn-secondary">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                        <span>Browse Listings</span>
+                    </a>
+                    <a href="{{ route('portal.map') }}" class="btn btn-secondary">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+                        <span>Listings Map</span>
+                    </a>
+                @endif
+
+                @if(Auth::user()->hasPermission('scrapers.manage'))
+                    <button type="button" class="btn btn-secondary" onclick="openModal('modal-new-scraper')">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                        <span>New Scraper</span>
+                    </button>
+                @endif
             </div>
         </div>
 
@@ -194,11 +216,12 @@
             <div class="card-title">
                 <svg style="width:20px;height:20px;color:var(--primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span>Phnom Penh Prime Districts ($/m² Benchmark)</span>
+                    <span>Phnom Penh Prime Districts ($/m² Benchmark)</span>
+                </div>
+                @if(Auth::user()->hasPermission('valuation.cma'))
+                    <a href="{{ route('portal.cma') }}" class="btn btn-secondary btn-sm">CMA Engine</a>
+                @endif
             </div>
-            <a href="{{ route('portal.cma') }}" class="btn btn-secondary btn-sm">CMA Engine</a>
-        </div>
         <div class="card-body">
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 @foreach($districtBenchmarks as $dist)
@@ -236,10 +259,12 @@
                     </svg>
                     <span>Multi-Portal Crawler Ingestion Hub</span>
                 </div>
-                <a href="{{ route('portal.scrapers') }}" class="btn btn-secondary btn-sm">
-                    <span>Manage All Crawlers</span>
-                    <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-                </a>
+                @if(Auth::user()->hasPermission('scrapers.view'))
+                    <a href="{{ route('portal.scrapers') }}" class="btn btn-secondary btn-sm">
+                        <span>Manage All Crawlers</span>
+                        <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </a>
+                @endif
             </div>
             <div class="table-responsive">
                 <table class="data-table">
@@ -277,18 +302,22 @@
                                     {{ $task->last_run_at ? $task->last_run_at->diffForHumans() : 'Never' }}
                                 </td>
                                 <td style="text-align: right;">
-                                    <button 
-                                        type="button" 
-                                        class="btn btn-secondary btn-sm"
-                                        onclick="triggerScraperAjax(this, {{ $task->id }})"
-                                        title="Trigger immediate scrape batch"
-                                    >
-                                        <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span>Run Live</span>
-                                    </button>
+                                    @if(Auth::user()->hasPermission('scrapers.trigger'))
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-secondary btn-sm"
+                                            onclick="triggerScraperAjax(this, {{ $task->id }})"
+                                            title="Trigger immediate scrape batch"
+                                        >
+                                            <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span>Run Live</span>
+                                        </button>
+                                    @else
+                                        <span style="font-size: 0.775rem; color: var(--text-muted); font-weight: 500;">Automated</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -306,7 +335,9 @@
                     </svg>
                     <span>High-Priority Distressed Deals (Algorithmic Detections)</span>
                 </div>
-                <a href="{{ route('portal.deals') }}" class="btn btn-secondary btn-sm">View All {{ number_format($stats['deals_count']) }} Deals</a>
+                @if(Auth::user()->hasPermission('valuation.deals'))
+                    <a href="{{ route('portal.deals') }}" class="btn btn-secondary btn-sm">View All {{ number_format($stats['deals_count']) }} Deals</a>
+                @endif
             </div>
             <div class="card-body">
                 <div class="property-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
@@ -353,51 +384,79 @@
 
     <!-- Right Column: Quick CMA Valuation Calculator & Audit Feed -->
     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-        <!-- Quick Land & Property Valuation Widget -->
-        <div class="card" style="border: 2px solid var(--primary); box-shadow: var(--shadow-glow);">
-            <div class="card-header" style="background: var(--primary-light);">
-                <div class="card-title">
-                    <svg style="width:20px;height:20px;color:var(--primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    <span>Instant Automated Valuation (AVM)</span>
+        <!-- Quick Land & Property Valuation Widget / Market Quick Explorer -->
+        @if(Auth::user()->hasPermission('valuation.cma'))
+            <div class="card" style="border: 2px solid var(--primary); box-shadow: var(--shadow-glow);">
+                <div class="card-header" style="background: var(--primary-light);">
+                    <div class="card-title">
+                        <svg style="width:20px;height:20px;color:var(--primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        <span>Instant Automated Valuation (AVM)</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                        Run a quick algorithmic appraisal using 19,700 real market comps.
+                    </p>
+                    <form action="{{ route('portal.cma') }}" method="GET">
+                        <div class="form-group">
+                            <label class="form-label">Subject Area (sqm)</label>
+                            <input type="number" name="area_sqm" value="500" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">District / Khan</label>
+                            <select name="district" class="form-control">
+                                <option value="Sen Sok">Sen Sok</option>
+                                <option value="Chbar Ampov">Chbar Ampov</option>
+                                <option value="Tuol Kouk">Tuol Kouk</option>
+                                <option value="Chamkarmon">Chamkarmon</option>
+                                <option value="Boeung Keng Kang">Boeung Keng Kang (BKK)</option>
+                                <option value="Dangkao">Dangkao</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Property Category</label>
+                            <select name="property_type" class="form-control">
+                                <option value="Land">Landed Plot</option>
+                                <option value="Villa">Villa / Borey</option>
+                                <option value="House">House / Shophouse</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+                            <span>Generate CMA Valuation Report</span>
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                        </button>
+                    </form>
                 </div>
             </div>
-            <div class="card-body">
-                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
-                    Run a quick algorithmic appraisal using 19,700 real market comps.
-                </p>
-                <form action="{{ route('portal.cma') }}" method="GET">
-                    <div class="form-group">
-                        <label class="form-label">Subject Area (sqm)</label>
-                        <input type="number" name="area_sqm" value="500" class="form-control" required>
+        @else
+            <div class="card" style="border: 1px solid var(--border-color);">
+                <div class="card-header">
+                    <div class="card-title">
+                        <svg style="width:20px;height:20px;color:var(--primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        <span>Market Inventory Explorer</span>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">District / Khan</label>
-                        <select name="district" class="form-control">
-                            <option value="Sen Sok">Sen Sok</option>
-                            <option value="Chbar Ampov">Chbar Ampov</option>
-                            <option value="Tuol Kouk">Tuol Kouk</option>
-                            <option value="Chamkarmon">Chamkarmon</option>
-                            <option value="Boeung Keng Kang">Boeung Keng Kang (BKK)</option>
-                            <option value="Dangkao">Dangkao</option>
-                        </select>
+                </div>
+                <div class="card-body">
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+                        Explore verified property listings and interactive GIS mapping across Cambodia.
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <a href="{{ route('portal.properties') }}" class="btn btn-primary" style="justify-content: center;">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                            <span>Browse All Listings</span>
+                        </a>
+                        <a href="{{ route('portal.map') }}" class="btn btn-secondary" style="justify-content: center;">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+                            <span>View Interactive GIS Map</span>
+                        </a>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Property Category</label>
-                        <select name="property_type" class="form-control">
-                            <option value="Land">Landed Plot</option>
-                            <option value="Villa">Villa / Borey</option>
-                            <option value="House">House / Shophouse</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
-                        <span>Generate CMA Valuation Report</span>
-                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                    </button>
-                </form>
+                </div>
             </div>
-        </div>
+        @endif
 
         <!-- Real-time Activity Timeline -->
         <div class="card">
@@ -437,6 +496,7 @@
 @endsection
 
 @section('modals')
+@if(Auth::user()->hasPermission('scrapers.manage'))
 <!-- Modal: New Scraper Job -->
 <div class="modal-backdrop" id="modal-new-scraper">
     <div class="modal-container">
@@ -489,4 +549,5 @@
         </form>
     </div>
 </div>
+@endif
 @endsection

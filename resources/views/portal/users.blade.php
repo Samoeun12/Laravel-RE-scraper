@@ -10,19 +10,23 @@
         <p class="page-subtitle">Manage team member credentials, security roles, and platform operational permissions</p>
     </div>
     <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-        <a href="{{ route('portal.permissions') }}" class="btn btn-secondary" title="View & Configure Role Permissions">
-            <svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span>Access Permissions</span>
-        </a>
+        @if(Auth::user()->hasPermission('permissions.view'))
+            <a href="{{ route('portal.permissions') }}" class="btn btn-secondary" title="View & Configure Role Permissions">
+                <svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>Access Permissions</span>
+            </a>
+        @endif
 
-        <button type="button" class="btn btn-primary" onclick="openModal('modal-create-user')">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-            <span>Add Team Member</span>
-        </button>
+        @if(Auth::user()->hasPermission('users.create'))
+            <button type="button" class="btn btn-primary" onclick="openModal('modal-create-user')">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                <span>Add Team Member</span>
+            </button>
+        @endif
     </div>
 </div>
 
@@ -227,64 +231,74 @@
                         <!-- Actions -->
                         <td style="text-align: right;">
                             <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
-                                <!-- Edit Button -->
-                                <button 
-                                    type="button" 
-                                    class="btn btn-secondary btn-sm" 
-                                    data-id="{{ $user->id }}"
-                                    data-name="{{ $user->name }}"
-                                    data-email="{{ $user->email }}"
-                                    data-role-id="{{ $user->role_id ?? ($user->roleModel ? $user->roleModel->id : 1) }}"
-                                    data-title="{{ $user->title }}"
-                                    data-phone="{{ $user->phone }}"
-                                    data-status="{{ $user->status }}"
-                                    data-avatar="{{ $user->avatar }}"
-                                    onclick="openEditUserModal(this)"
-                                    title="Edit user details"
-                                >
-                                    <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                    <span>Edit</span>
-                                </button>
+                                @if(Auth::user()->hasPermission('users.edit'))
+                                    <!-- Edit Button -->
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-secondary btn-sm" 
+                                        data-id="{{ $user->id }}"
+                                        data-name="{{ $user->name }}"
+                                        data-email="{{ $user->email }}"
+                                        data-role-id="{{ $user->role_id ?? ($user->roleModel ? $user->roleModel->id : 1) }}"
+                                        data-title="{{ $user->title }}"
+                                        data-phone="{{ $user->phone }}"
+                                        data-status="{{ $user->status }}"
+                                        data-avatar="{{ $user->avatar }}"
+                                        onclick="openEditUserModal(this)"
+                                        title="Edit user details"
+                                    >
+                                        <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        <span>Edit</span>
+                                    </button>
+                                @endif
 
                                 @if($user->id !== Auth::id())
-                                    <!-- Toggle Status Button -->
-                                    <form action="{{ route('portal.users.toggle-status', $user->id) }}" method="POST" style="margin:0;">
-                                        @csrf
-                                        <button 
-                                            type="submit" 
-                                            class="btn btn-secondary btn-sm" 
-                                            style="padding: 4px 8px;"
-                                            title="{{ $user->isActive() ? 'Suspend user account' : 'Reactivate user account' }}"
-                                        >
-                                            @if($user->isActive())
-                                                <svg style="width:14px;height:14px;color:var(--warning);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                                </svg>
-                                            @else
-                                                <svg style="width:14px;height:14px;color:var(--success);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            @endif
-                                        </button>
-                                    </form>
+                                    @if(Auth::user()->hasPermission('users.edit'))
+                                        <!-- Toggle Status Button -->
+                                        <form action="{{ route('portal.users.toggle-status', $user->id) }}" method="POST" style="margin:0;">
+                                            @csrf
+                                            <button 
+                                                type="submit" 
+                                                class="btn btn-secondary btn-sm" 
+                                                style="padding: 4px 8px;"
+                                                title="{{ $user->isActive() ? 'Suspend user account' : 'Reactivate user account' }}"
+                                            >
+                                                @if($user->isActive())
+                                                    <svg style="width:14px;height:14px;color:var(--warning);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                    </svg>
+                                                @else
+                                                    <svg style="width:14px;height:14px;color:var(--success);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                @endif
+                                            </button>
+                                        </form>
+                                    @endif
 
-                                    <!-- Delete Button -->
-                                    <form action="{{ route('portal.users.delete', $user->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('Permanently remove {{ $user->name }} from the portal?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button 
-                                            type="submit" 
-                                            class="btn btn-danger btn-sm" 
-                                            style="padding: 4px 8px;"
-                                            title="Delete account"
-                                        >
-                                            <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
-                                    </form>
+                                    @if(Auth::user()->hasPermission('users.delete'))
+                                        <!-- Delete Button -->
+                                        <form action="{{ route('portal.users.delete', $user->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('Permanently remove {{ $user->name }} from the portal?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button 
+                                                type="submit" 
+                                                class="btn btn-danger btn-sm" 
+                                                style="padding: 4px 8px;"
+                                                title="Delete account"
+                                            >
+                                                <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    @endif
+                                @endif
+
+                                @if(!Auth::user()->hasPermission('users.edit') && !Auth::user()->hasPermission('users.delete'))
+                                    <span style="font-size: 0.775rem; color: var(--text-muted);">View Only</span>
                                 @endif
                             </div>
                         </td>

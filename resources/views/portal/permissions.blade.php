@@ -92,12 +92,14 @@ input:disabled + .toggle-slider {
             <span>Team Members</span>
         </a>
 
-        <button type="button" class="btn btn-primary" onclick="openModal('modal-create-role')">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Create Custom Role</span>
-        </button>
+        @if(Auth::user()->hasPermission('permissions.manage'))
+            <button type="button" class="btn btn-primary" onclick="openModal('modal-create-role')">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Create Custom Role</span>
+            </button>
+        @endif
     </div>
 </div>
 
@@ -112,7 +114,7 @@ input:disabled + .toggle-slider {
                         {{ $role->name }}
                     </span>
 
-                    @if(!$role->is_system)
+                    @if(!$role->is_system && Auth::user()->hasPermission('permissions.manage'))
                         <form action="{{ route('portal.permissions.roles.delete', $role->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete role {{ $role->name }}?');">
                             @csrf
                             @method('DELETE')
@@ -120,7 +122,7 @@ input:disabled + .toggle-slider {
                                 &times;
                             </button>
                         </form>
-                    @else
+                    @elseif($role->is_system)
                         <span title="System Default Role" style="font-size: 11px; color: var(--text-muted);">🔒</span>
                     @endif
                 </div>
@@ -237,6 +239,7 @@ input:disabled + .toggle-slider {
                                             <input 
                                                 type="checkbox" 
                                                 {{ $isGranted ? 'checked' : '' }}
+                                                {{ !Auth::user()->hasPermission('permissions.manage') ? 'disabled' : '' }}
                                                 onchange="togglePermission({{ $role->id }}, {{ $perm->id }}, this.checked, this)"
                                             >
                                             <span class="toggle-slider"></span>

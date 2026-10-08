@@ -288,7 +288,7 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($extraUsers as $u) {
-            User::firstOrCreate(['email' => $u['email']], $u);
+            User::updateOrCreate(['email' => $u['email']], $u);
         }
     }
 }

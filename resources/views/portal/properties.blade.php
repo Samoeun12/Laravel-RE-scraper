@@ -15,12 +15,14 @@
             </svg>
             <span>Listings Map</span>
         </a>
-        <button type="button" class="btn btn-primary" onclick="openModal('modal-add-property')">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Record Property</span>
-        </button>
+        @if(Auth::user()->hasPermission('properties.create'))
+            <button type="button" class="btn btn-primary" onclick="openModal('modal-add-property')">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Record Property</span>
+            </button>
+        @endif
     </div>
 </div>
 
@@ -146,15 +148,17 @@
                             </a>
                         @endif
 
-                        <form action="{{ route('portal.properties.delete', $item->id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Remove property?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" style="background: none; color: var(--danger); cursor: pointer; padding: 2px;" title="Delete Listing">
-                                <svg style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
-                        </form>
+                        @if(Auth::user()->hasPermission('properties.delete'))
+                            <form action="{{ route('portal.properties.delete', $item->id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Remove property?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" style="background: none; color: var(--danger); cursor: pointer; padding: 2px;" title="Delete Listing">
+                                    <svg style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -178,6 +182,7 @@
 @endsection
 
 @section('modals')
+@if(Auth::user()->hasPermission('properties.create'))
 <!-- Modal: Add Property -->
 <div class="modal-backdrop" id="modal-add-property">
     <div class="modal-container">
@@ -255,4 +260,5 @@
         </form>
     </div>
 </div>
+@endif
 @endsection

@@ -78,11 +78,14 @@ class AuthController extends Controller
             'title' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $defaultRole = \App\Models\Role::where('slug', 'analyst')->first();
+
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => 'Analyst',
+            'role' => $defaultRole ? $defaultRole->name : 'Real Estate Analyst',
+            'role_id' => $defaultRole ? $defaultRole->id : null,
             'title' => $validated['title'] ?? 'Real Estate Analyst',
             'theme_preference' => 'dark',
         ]);

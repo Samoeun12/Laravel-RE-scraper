@@ -9,12 +9,14 @@
         <p class="page-subtitle">Configure real estate automated web scrapers, spiders, and scheduled extraction pipelines</p>
     </div>
     <div>
-        <button type="button" class="btn btn-primary" onclick="openModal('modal-new-scraper')">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Create Scraper Pipeline</span>
-        </button>
+        @if(Auth::user()->hasPermission('scrapers.manage'))
+            <button type="button" class="btn btn-primary" onclick="openModal('modal-new-scraper')">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Create Scraper Pipeline</span>
+            </button>
+        @endif
     </div>
 </div>
 
@@ -81,29 +83,37 @@
                             </div>
                         </td>
                         <td style="text-align: right;">
-                            <div style="display: inline-flex; gap: 0.5rem;">
-                                <button 
-                                    type="button" 
-                                    class="btn btn-secondary btn-sm"
-                                    onclick="triggerScraperAjax(this, {{ $task->id }})"
-                                    title="Trigger immediate scrape batch"
-                                >
-                                    <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span>Run</span>
-                                </button>
-
-                                <form action="{{ route('portal.scrapers.delete', $task->id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Permanently delete scraper pipeline {{ $task->name }}?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete Pipeline">
+                            <div style="display: inline-flex; gap: 0.5rem; align-items: center;">
+                                @if(Auth::user()->hasPermission('scrapers.trigger'))
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-secondary btn-sm"
+                                        onclick="triggerScraperAjax(this, {{ $task->id }})"
+                                        title="Trigger immediate scrape batch"
+                                    >
                                         <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
+                                        <span>Run</span>
                                     </button>
-                                </form>
+                                @endif
+
+                                @if(Auth::user()->hasPermission('scrapers.manage'))
+                                    <form action="{{ route('portal.scrapers.delete', $task->id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Permanently delete scraper pipeline {{ $task->name }}?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete Pipeline">
+                                            <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </form>
+                                @endif
+
+                                @if(!Auth::user()->hasPermission('scrapers.trigger') && !Auth::user()->hasPermission('scrapers.manage'))
+                                    <span style="font-size: 0.775rem; color: var(--text-muted);">View Only</span>
+                                @endif
                             </div>
                         </td>
                     </tr>

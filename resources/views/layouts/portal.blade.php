@@ -27,70 +27,90 @@
                 <span>Dashboard</span>
             </a>
 
-            <div class="nav-section-title">Data Ingestion</div>
-            <a href="{{ route('portal.scrapers') }}" class="nav-item {{ request()->routeIs('portal.scrapers*') ? 'active' : '' }}">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-                <span>Scraper Hub</span>
-                <span class="nav-pill-badge">{{ \App\Models\ScraperTask::where('status', 'running')->count() }} live</span>
-            </a>
+            @if(Auth::user()->hasPermission('scrapers.view') || Auth::user()->hasPermission('properties.view'))
+                <div class="nav-section-title">Data Ingestion</div>
+                @if(Auth::user()->hasPermission('scrapers.view'))
+                    <a href="{{ route('portal.scrapers') }}" class="nav-item {{ request()->routeIs('portal.scrapers*') ? 'active' : '' }}">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        <span>Scraper Hub</span>
+                        <span class="nav-pill-badge">{{ \App\Models\ScraperTask::where('status', 'running')->count() }} live</span>
+                    </a>
+                @endif
 
-            <a href="{{ route('portal.properties') }}" class="nav-item {{ request()->routeIs('portal.properties*') ? 'active' : '' }}">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <span>Listings</span>
-                <span class="nav-pill-badge">{{ number_format(\App\Models\Property::count()) }}</span>
-            </a>
+                @if(Auth::user()->hasPermission('properties.view'))
+                    <a href="{{ route('portal.properties') }}" class="nav-item {{ request()->routeIs('portal.properties*') ? 'active' : '' }}">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        <span>Listings</span>
+                        <span class="nav-pill-badge">{{ number_format(\App\Models\Property::count()) }}</span>
+                    </a>
 
-            <a href="{{ route('portal.map') }}" class="nav-item {{ request()->routeIs('portal.map*') ? 'active' : '' }}">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-                <span>Listings Map</span>
-                <span class="nav-pill-badge" style="background:rgba(59,130,246,0.15);color:var(--primary);font-weight:700;">GIS</span>
-            </a>
+                    <a href="{{ route('portal.map') }}" class="nav-item {{ request()->routeIs('portal.map*') ? 'active' : '' }}">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                        </svg>
+                        <span>Listings Map</span>
+                        <span class="nav-pill-badge" style="background:rgba(59,130,246,0.15);color:var(--primary);font-weight:700;">GIS</span>
+                    </a>
+                @endif
+            @endif
 
-            <div class="nav-section-title">Valuation & Intelligence</div>
-            <a href="{{ route('portal.deals') }}" class="nav-item {{ request()->routeIs('portal.deals*') ? 'active' : '' }}">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span>Deal & Discount Finder</span>
-                <span class="nav-pill-badge" style="background:var(--danger-bg);color:var(--danger);font-weight:700;">Hot</span>
-            </a>
+            @if(Auth::user()->hasPermission('valuation.deals') || Auth::user()->hasPermission('valuation.cma') || Auth::user()->hasPermission('valuation.land'))
+                <div class="nav-section-title">Valuation & Intelligence</div>
+                @if(Auth::user()->hasPermission('valuation.deals'))
+                    <a href="{{ route('portal.deals') }}" class="nav-item {{ request()->routeIs('portal.deals*') ? 'active' : '' }}">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span>Deal & Discount Finder</span>
+                        <span class="nav-pill-badge" style="background:var(--danger-bg);color:var(--danger);font-weight:700;">Hot</span>
+                    </a>
+                @endif
 
-            <a href="{{ route('portal.cma') }}" class="nav-item {{ request()->routeIs('portal.cma*') ? 'active' : '' }}">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span>CMA Valuation</span>
-            </a>
+                @if(Auth::user()->hasPermission('valuation.cma'))
+                    <a href="{{ route('portal.cma') }}" class="nav-item {{ request()->routeIs('portal.cma*') ? 'active' : '' }}">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <span>CMA Valuation</span>
+                    </a>
+                @endif
 
-            <a href="{{ route('portal.land_estimator') }}" class="nav-item {{ request()->routeIs('portal.land_estimator*') ? 'active' : '' }}">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-                <span>Land Estimator</span>
-            </a>
+                @if(Auth::user()->hasPermission('valuation.land'))
+                    <a href="{{ route('portal.land_estimator') }}" class="nav-item {{ request()->routeIs('portal.land_estimator*') ? 'active' : '' }}">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                        </svg>
+                        <span>Land Estimator</span>
+                    </a>
+                @endif
+            @endif
 
-            <div class="nav-section-title">Administration</div>
-            <a href="{{ route('portal.users') }}" class="nav-item {{ request()->routeIs('portal.users*') ? 'active' : '' }}">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <span>User Management</span>
-                <span class="nav-pill-badge">{{ \App\Models\User::count() }}</span>
-            </a>
+            @if(Auth::user()->hasPermission('users.view') || Auth::user()->hasPermission('permissions.view'))
+                <div class="nav-section-title">Administration</div>
+                @if(Auth::user()->hasPermission('users.view'))
+                    <a href="{{ route('portal.users') }}" class="nav-item {{ request()->routeIs('portal.users*') ? 'active' : '' }}">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <span>User Management</span>
+                        <span class="nav-pill-badge">{{ \App\Models\User::count() }}</span>
+                    </a>
+                @endif
 
-            <a href="{{ route('portal.permissions') }}" class="nav-item {{ request()->routeIs('portal.permissions*') ? 'active' : '' }}">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                <span>Access Permissions</span>
-                <span class="nav-pill-badge" style="background:rgba(16,185,129,0.15);color:var(--success);font-weight:700;">RBAC</span>
-            </a>
+                @if(Auth::user()->hasPermission('permissions.view'))
+                    <a href="{{ route('portal.permissions') }}" class="nav-item {{ request()->routeIs('portal.permissions*') ? 'active' : '' }}">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <span>Access Permissions</span>
+                        <span class="nav-pill-badge" style="background:rgba(16,185,129,0.15);color:var(--success);font-weight:700;">RBAC</span>
+                    </a>
+                @endif
+            @endif
 
             <div class="nav-section-title">Account & Config</div>
             <a href="{{ route('portal.profile') }}" class="nav-item {{ request()->routeIs('portal.profile*') ? 'active' : '' }}">
@@ -186,7 +206,13 @@
         </header>
 
         <!-- Main Body Content -->
-        <main class="content-body">
+            @if(session('error'))
+                <div class="alert alert-danger" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+                    <svg style="width:20px;height:20px;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <span>{{ session('error') }}</span>
+                </div>
+            @endif
+
             @if(session('success'))
                 <div class="alert alert-success">
                     <svg style="width:18px;height:18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
