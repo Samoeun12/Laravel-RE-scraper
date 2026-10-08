@@ -36,6 +36,10 @@ class RealEstateScraperService
             return $this->scrapePropNex($task);
         }
 
+        if (str_contains($source, 'bayon') || str_contains($source, 'bayonapp')) {
+            return $this->scrapeBayonApp($task);
+        }
+
         // Generic mock crawl simulation for other web crawlers
         $randomHarvest = rand(12, 35);
         $task->increment('items_scraped', $randomHarvest);
@@ -579,6 +583,179 @@ class RealEstateScraperService
             Log::error("PropNex Scraper Error: " . $e->getMessage());
             if ($task) {
                 $task->update(['last_log' => 'PropNex sync warning: ' . $e->getMessage()]);
+            }
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Live Ingestion from Bayon App (bayonapp.com) REST API.
+     */
+    public function scrapeBayonApp(?ScraperTask $task = null, int $limit = 50): array
+    {
+        try {
+            $url = "https://agent.bayonapp.com/api/v1/property/fetch?skip=0&limit={$limit}";
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+                'Accept' => 'application/json, text/plain, */*',
+                'token' => 'narongrealestate',
+                'Origin' => 'https://bayonapp.com',
+                'Referer' => 'https://bayonapp.com/',
+            ])->timeout(25)->get($url);
+
+            if (!$response->successful()) {
+                throw new \Exception("Bayon App API error HTTP " . $response->status());
+            }
+
+            $data = $response->json();
+            $content = $data['data']['content'] ?? [];
+            $count = 0;
+
+            foreach ($content as $it) {
+                $pid = (string) ($it['_id'] ?? $it['code'] ?? uniqid());
+                $code = trim((string) ($it['code'] ?? ''));
+
+                $rawType = strtolower((string) ($it['type'] ?? 'other'));
+                $propType = match ($rawType) {
+                    'land', 'farmland' => 'Land',
+                    'house', 'flat' => 'House',
+                    'villa', 'queenvilla', 'twinvilla', 'princevilla', 'linkvilla' => 'Villa',
+                    'condo' => 'Condo',
+                    'apartment' => 'Apartment',
+                    'commercial', 'building', 'shophouse', 'office' => 'Commercial',
+                    'warehouse' => 'Warehouse',
+                    default => ucfirst($rawType) ?: 'House',
+                };
+
+                $groupType = strtolower((string) ($it['groupType'] ?? 'sale'));
+                $listingType = str_contains($groupType, 'rent') ? 'Rent' : 'Sale';
+
+                // Pricing logic
+                $priceVal = !empty($it['price']) && (float) $it['price'] > 0 ? (float) $it['price'] : null;
+                $lastPriceVal = !empty($it['lastPrice']) && (float) $it['lastPrice'] > 0 ? (float) $it['lastPrice'] : null;
+                $price = $priceVal ?: $lastPriceVal;
+
+                // Area / Size
+                $area = !empty($it['size']) ? (float) preg_replace('/[^\d.]/', '', (string) $it['size']) : null;
+
+                // Price per square meter
+                $sqmPrice = !empty($it['pricePerSquare']) ? (float) preg_replace('/[^\d.]/', '', (string) $it['pricePerSquare']) : null;
+                if (!$sqmPrice && $price && $area && $area > 0) {
+                    $sqmPrice = round($price / $area, 2);
+                }
+
+                // Title resolution (uses Khmer / English headline if title is generic)
+                $rawTitle = trim((string) ($it['title'] ?? ''));
+                $desc = trim((string) ($it['desc'] ?? ''));
+                $title = '';
+
+                if (!empty($rawTitle) && $rawTitle !== '-' && !str_starts_with($rawTitle, 'Bayon B')) {
+                    $title = $rawTitle;
+                } elseif (!empty($desc)) {
+                    $lines = array_filter(array_map('trim', explode("\n", $desc)));
+                    foreach ($lines as $line) {
+                        $cleaned = trim(preg_replace('/^[\s📍🏝🏠⚡️👉🔹🔸🔻\-\#\*]+/u', '', $line));
+                        if (mb_strlen($cleaned) >= 5) {
+                            $title = mb_substr($cleaned, 0, 120);
+                            break;
+                        }
+                    }
+                }
+
+                if (empty($title)) {
+                    $title = "Bayon App {$propType} for {$listingType}";
+                    if ($code) {
+                        $title .= " (#{$code})";
+                    }
+                } elseif ($code && !str_contains($title, "#{$code}") && !str_contains($title, $code)) {
+                    $title .= " (#{$code})";
+                }
+
+                // Urgency / Market tag
+                $urgencyTag = null;
+                $haystack = mb_strtolower($title . ' ' . $desc);
+                if (str_contains($haystack, 'urgent') || str_contains($haystack, 'បន្ទាន់') || str_contains($haystack, 'ក្រោមទីផ្សារ') || str_contains($haystack, '急售')) {
+                    $urgencyTag = 'Urgent / Distressed';
+                } elseif (str_contains($haystack, 'ចរចា') || str_contains($haystack, 'negotiable')) {
+                    $urgencyTag = 'Negotiable';
+                } elseif (str_contains($haystack, 'hot') || str_contains($haystack, 'discount')) {
+                    $urgencyTag = 'Price Reduced';
+                }
+
+                // Photo URL
+                $urls = $it['urlList'] ?? [];
+                $imageUrl = !empty($urls[0]) ? $urls[0] : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80';
+
+                // High precision GPS coordinates
+                $lat = !empty($it['position']['lat']) ? (float) $it['position']['lat'] : (!empty($it['geolocation']['coordinates'][1]) ? (float) $it['geolocation']['coordinates'][1] : null);
+                $lng = !empty($it['position']['lng']) ? (float) $it['position']['lng'] : (!empty($it['geolocation']['coordinates'][0]) ? (float) $it['geolocation']['coordinates'][0] : null);
+
+                // Beds / Baths
+                $bedrooms = !empty($it['numBed']) && (int) $it['numBed'] > 0 ? (int) $it['numBed'] : null;
+                $bathrooms = !empty($it['numBathroom']) && (int) $it['numBathroom'] > 0 ? (int) $it['numBathroom'] : null;
+
+                // Province / District
+                $province = $it['locationDoc']['name'] ?? 'Phnom Penh';
+                $district = $it['districtDoc']['name'] ?? null;
+                $rawAddress = trim((string) ($it['address'] ?? ''));
+                if ($rawAddress === '-' || empty($rawAddress)) {
+                    $rawAddress = $district ? "{$district}, {$province}" : $province;
+                }
+
+                // Detail URL
+                $propertyUrl = "https://bayonapp.com/#/properties/{$pid}";
+
+                Property::updateOrCreate(
+                    ['url' => $propertyUrl],
+                    [
+                        'source' => 'bayon',
+                        'source_name' => 'Bayon App Real Estate (bayonapp.com)',
+                        'source_id' => $pid,
+                        'title' => $title,
+                        'property_type' => $propType,
+                        'listing_type' => $listingType,
+                        'price_usd' => $price,
+                        'price' => $price,
+                        'currency' => 'USD',
+                        'area_sqm' => $area,
+                        'price_per_sqm' => $sqmPrice,
+                        'province' => $province ?: 'Phnom Penh',
+                        'district' => $district,
+                        'location' => $rawAddress,
+                        'city' => $province ?: 'Phnom Penh',
+                        'bedrooms' => $bedrooms,
+                        'bathrooms' => $bathrooms,
+                        'latitude' => $lat,
+                        'longitude' => $lng,
+                        'image_url' => $imageUrl,
+                        'urgency_tag' => $urgencyTag,
+                        'status' => 'available',
+                        'scraper_task_id' => $task ? $task->id : null,
+                    ]
+                );
+
+                $count++;
+            }
+
+            if ($task) {
+                $task->increment('items_scraped', $count);
+                $task->update([
+                    'status' => 'completed',
+                    'last_run_at' => now(),
+                    'last_log' => "Direct Bayon App REST API sync completed. Ingested {$count} records.",
+                ]);
+            }
+
+            return [
+                'success' => true,
+                'source' => 'Bayon App Real Estate',
+                'count' => $count,
+                'message' => "Successfully harvested {$count} live listings from Bayon App REST API!",
+            ];
+        } catch (\Throwable $e) {
+            Log::error("Bayon App Scraper Error: " . $e->getMessage());
+            if ($task) {
+                $task->update(['last_log' => 'Bayon App sync warning: ' . $e->getMessage()]);
             }
             return ['success' => false, 'message' => $e->getMessage()];
         }

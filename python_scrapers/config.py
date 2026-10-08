@@ -52,6 +52,14 @@ WEBSITES = {
         "speed": "Ultra Fast",
         "color": "#7c3aed",
         "icon": "fa-solid fa-building-shield"
+    },
+    "bayon": {
+        "name": "Bayon App Real Estate",
+        "url": "https://bayonapp.com/",
+        "method": "Direct REST API",
+        "speed": "Ultra Fast",
+        "color": "#f97316",
+        "icon": "fa-solid fa-mobile-screen-button"
     }
 }
 

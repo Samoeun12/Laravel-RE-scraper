@@ -51,6 +51,7 @@ class PortalController extends Controller
             'realestate' => ['name' => 'Realestate.com.kh', 'color' => '#8b5cf6'],
             'propnex' => ['name' => 'PropNex Cambodia (API)', 'color' => '#ec4899'],
             'harbor' => ['name' => 'Harbor Property', 'color' => '#06b6d4'],
+            'bayon' => ['name' => 'Bayon App (API)', 'color' => '#f97316'],
         ];
 
         $portalDistribution = [];

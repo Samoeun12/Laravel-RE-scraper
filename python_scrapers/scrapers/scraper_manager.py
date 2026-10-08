@@ -11,6 +11,7 @@ from scrapers.harbor_scraper import HarborScraper
 from scrapers.realestate_scraper import RealestateScraper
 from scrapers.khmer24_scraper import Khmer24Scraper
 from scrapers.cambodia_re_scraper import CambodiaReScraper
+from scrapers.bayon_scraper import BayonScraper
 from database import upsert_properties_batch, log_scrape_run
 
 SCRAPER_CLASSES = {
@@ -18,7 +19,8 @@ SCRAPER_CLASSES = {
     "harbor": HarborScraper,
     "realestate": RealestateScraper,
     "khmer24": Khmer24Scraper,
-    "cambodia_re": CambodiaReScraper
+    "cambodia_re": CambodiaReScraper,
+    "bayon": BayonScraper
 }
 
 

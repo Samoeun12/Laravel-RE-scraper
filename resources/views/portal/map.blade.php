@@ -747,7 +747,8 @@
                 </select>
 
                 <select id="filter-source" class="filter-select" onchange="applyFilters()">
-                    <option value="">All Portals (6 Sources)</option>
+                    <option value="">All Portals (7 Sources)</option>
+                    <option value="bayon">Bayon App (API)</option>
                     <option value="cambodia_re">Century 21 (C21)</option>
                     <option value="arc">ARC Cambodia</option>
                     <option value="realestate">Realestate.com.kh</option>

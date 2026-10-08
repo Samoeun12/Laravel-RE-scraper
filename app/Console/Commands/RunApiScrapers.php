@@ -15,7 +15,7 @@ class RunApiScrapers extends Command
      *
      * @var string
      */
-    protected $signature = 'scraper:run-apis {--source=all : The source to scrape (propnex, realestate, c21, arc, harbor, or all)} {--limit=50 : Items per portal}';
+    protected $signature = 'scraper:run-apis {--source=all : The source to scrape (bayon, propnex, realestate, c21, arc, harbor, or all)} {--limit=50 : Items per portal}';
 
     /**
      * The console command description.
@@ -35,6 +35,12 @@ class RunApiScrapers extends Command
         $this->info("🚀 Starting Direct API Real Estate Scraper Suite (Source: {$source}, Limit: {$limit})...");
 
         $tasks = [
+            'bayon' => [
+                'name' => 'Bayon App Real Estate (Direct REST API)',
+                'source_name' => 'Bayon App Real Estate (bayonapp.com)',
+                'target_url' => 'https://bayonapp.com/',
+                'method' => 'scrapeBayonApp',
+            ],
             'propnex' => [
                 'name' => 'PropNex Cambodia (Direct OpenAPI)',
                 'source_name' => 'PropNex Cambodia',

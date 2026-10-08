@@ -13,3 +13,8 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+python_scrapers/properties.db

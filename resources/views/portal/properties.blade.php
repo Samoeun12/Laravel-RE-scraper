@@ -43,7 +43,8 @@
             <!-- Portal Source Filter -->
             <div style="flex: 1; min-width: 150px;">
                 <select name="source" class="form-control" onchange="this.form.submit()">
-                    <option value="">All Portals (6 Sources)</option>
+                    <option value="">All Portals (7 Sources)</option>
+                    <option value="bayon" {{ request('source') == 'bayon' ? 'selected' : '' }}>Bayon App (API)</option>
                     <option value="cambodia_re" {{ request('source') == 'cambodia_re' ? 'selected' : '' }}>Century 21 (C21 API)</option>
                     <option value="arc" {{ request('source') == 'arc' ? 'selected' : '' }}>ARC Cambodia (API)</option>
                     <option value="propnex" {{ request('source') == 'propnex' ? 'selected' : '' }}>PropNex Cambodia (API)</option>

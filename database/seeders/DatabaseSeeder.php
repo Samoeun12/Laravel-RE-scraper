@@ -107,6 +107,16 @@ class DatabaseSeeder extends Seeder
                 'items_scraped' => Property::where('source', 'propnex')->count() ?: 50,
                 'last_log' => 'OpenAPI v1 endpoint connected. Borey and villa inventory parsed.',
             ],
+            [
+                'name' => 'Bayon App Real Estate (Live API)',
+                'source_name' => 'Bayon App Real Estate (bayonapp.com)',
+                'target_url' => 'https://bayonapp.com/',
+                'category' => 'Nationwide & Land Portfolios',
+                'status' => 'completed',
+                'frequency' => 'Every 3 Hours',
+                'items_scraped' => Property::where('source', 'bayon')->count() ?: 50,
+                'last_log' => 'Direct REST API integration active with high-res photos & GPS coordinates.',
+            ],
         ];
 
         foreach ($scrapers as $s) {

@@ -50,19 +50,37 @@ $arcTask = ScraperTask::where('source_name', 'like', '%ARC%')->first();
 // 5. Ensure ScraperTask for Harbor
 $harborTask = ScraperTask::where('source_name', 'like', '%Harbor%')->first();
 
-echo "[1/5] Ingesting from PropNex Cambodia OpenAPI (page 1, 50 items)...\n";
+// 6. Ensure ScraperTask for Bayon App
+$bayonTask = ScraperTask::firstOrCreate(
+    ['source_name' => 'Bayon App Real Estate (bayonapp.com)'],
+    [
+        'name' => 'Bayon App Real Estate (Live API)',
+        'target_url' => 'https://bayonapp.com/',
+        'category' => 'Nationwide & Land Portfolios',
+        'frequency' => 'Every 3 Hours',
+        'status' => 'active',
+        'items_scraped' => 0,
+        'user_id' => 1,
+    ]
+);
+
+echo "[1/6] Ingesting from Bayon App Real Estate REST API (50 items)...\n";
+$bayonResult = $service->scrapeBayonApp($bayonTask, 50);
+echo "  -> Result: " . ($bayonResult['success'] ? 'SUCCESS' : 'FAILED') . " - " . ($bayonResult['message'] ?? '') . "\n";
+
+echo "\n[2/6] Ingesting from PropNex Cambodia OpenAPI (page 1, 50 items)...\n";
 $propnexResult = $service->scrapePropNex($propnexTask, 50);
 echo "  -> Result: " . ($propnexResult['success'] ? 'SUCCESS' : 'FAILED') . " - " . ($propnexResult['message'] ?? '') . "\n";
 
-echo "\n[2/5] Ingesting from Realestate.com.kh REST API (page 1, 50 items)...\n";
+echo "\n[3/6] Ingesting from Realestate.com.kh REST API (page 1, 50 items)...\n";
 $reResult = $service->scrapeRealestateComKh($realestateTask, 50);
 echo "  -> Result: " . ($reResult['success'] ? 'SUCCESS' : 'FAILED') . " - " . ($reResult['message'] ?? '') . "\n";
 
-echo "\n[3/5] Ingesting from Century 21 Cambodia Houzez REST API (25 items)...\n";
+echo "\n[4/6] Ingesting from Century 21 Cambodia Houzez REST API (25 items)...\n";
 $c21Result = $service->scrapeCentury21($c21Task, 25);
 echo "  -> Result: " . ($c21Result['success'] ? 'SUCCESS' : 'FAILED') . " - " . ($c21Result['message'] ?? '') . "\n";
 
-echo "\n[4/5] Ingesting from ARC Cambodia PMS API (25 items)...\n";
+echo "\n[5/6] Ingesting from ARC Cambodia PMS API (25 items)...\n";
 $arcResult = $service->scrapeARC($arcTask, 25);
 echo "  -> Result: " . ($arcResult['success'] ? 'SUCCESS' : 'FAILED') . " - " . ($arcResult['message'] ?? '') . "\n";
 
