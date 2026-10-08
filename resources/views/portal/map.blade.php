@@ -1142,11 +1142,14 @@ function plotMarkersOnMap(properties) {
 
         const marker = L.marker([item.lat, item.lng], { icon: customIcon });
 
+        const defaultImg = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80';
+        const displayImg = item.image && item.image.trim() ? item.image : defaultImg;
+
         // Glassmorphism Popup
         const popupContent = `
             <div class="map-popup-card">
                 <div class="map-popup-img-wrap">
-                    <img src="${item.image}" alt="${escapeHtml(item.title)}" class="map-popup-img" loading="lazy">
+                    <img src="${displayImg}" alt="${escapeHtml(item.title)}" class="map-popup-img" loading="lazy" onerror="this.onerror=null;this.src='${defaultImg}'">
                     <span class="map-popup-badge ${isRent ? 'rent' : 'sale'}">
                         ${item.listing_type} &bull; ${item.property_type}
                     </span>
@@ -1173,7 +1176,11 @@ function plotMarkersOnMap(properties) {
             </div>
         `;
 
-        marker.bindPopup(popupContent, { maxWidth: 285 });
+        marker.bindPopup(popupContent, { 
+            maxWidth: 290,
+            autoPanPaddingTopLeft: [20, 80],
+            autoPanPaddingBottomRight: [20, 50]
+        });
         marker.on('click', () => {
             highlightFeedCard(item.id);
         });
@@ -1235,9 +1242,11 @@ function renderLeftCards(properties) {
     }
 
     // Render up to 80 cards to maintain silky-smooth 60fps scrolling
+    const defaultImg = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80';
     const cardsHtml = properties.slice(0, 80).map(item => {
         const isRent = (item.listing_type || '').toLowerCase() === 'rent';
         const isUrgent = !!item.urgency_tag;
+        const displayImg = item.image && item.image.trim() ? item.image : defaultImg;
 
         return `
             <div 
@@ -1248,7 +1257,7 @@ function renderLeftCards(properties) {
                 onmouseleave="hoverMarker(${item.id}, false)"
             >
                 <div class="feed-card-thumb-wrap">
-                    <img src="${item.image}" alt="${escapeHtml(item.title)}" class="feed-card-thumb" loading="lazy">
+                    <img src="${displayImg}" alt="${escapeHtml(item.title)}" class="feed-card-thumb" loading="lazy" onerror="this.onerror=null;this.src='${defaultImg}'">
                     <span class="feed-card-badge ${isRent ? 'rent' : 'sale'}">
                         ${item.listing_type}
                     </span>
@@ -1283,14 +1292,9 @@ function panToProperty(id) {
     const marker = markersMap.get(id);
     if (!marker || !map) return;
 
-    const latLng = marker.getLatLng();
-    map.flyTo(latLng, 17, { animate: true, duration: 0.8 });
-
-    setTimeout(() => {
-        markerClusterGroup.zoomToShowLayer(marker, () => {
-            marker.openPopup();
-        });
-    }, 300);
+    markerClusterGroup.zoomToShowLayer(marker, function() {
+        marker.openPopup();
+    });
 
     highlightFeedCard(id);
 }
@@ -1348,6 +1352,8 @@ function toggleTheaterMode() {
 
 function resetMapBounds() {
     panToLocation(11.5564, 104.9282, 13);
+    const ppPill = document.querySelector('.quick-pill');
+    if (ppPill) ppPill.classList.add('active');
 }
 
 function escapeHtml(text) {
