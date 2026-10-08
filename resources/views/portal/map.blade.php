@@ -19,6 +19,14 @@
     flex-direction: column !important;
 }
 
+/* Theater Mode: Collapse portal sidebar for ultra-wide edge-to-edge GIS exploration */
+.app-layout.map-theater-mode .sidebar {
+    transform: translateX(-100%) !important;
+}
+.app-layout.map-theater-mode .main-wrapper {
+    margin-left: 0 !important;
+}
+
 .map-layout-container {
     display: flex;
     flex: 1;
@@ -32,7 +40,7 @@
    LEFT SIDE: Search, Filters & Scrollable Property Cards Feed
    ========================================================================== */
 .map-left-panel {
-    width: 450px;
+    width: 440px;
     min-width: 380px;
     max-width: 480px;
     height: 100%;
@@ -42,7 +50,7 @@
     flex-direction: column;
     z-index: 25;
     transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s ease;
-    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.05);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.06);
 }
 
 .map-left-panel.collapsed {
@@ -52,16 +60,17 @@
     transform: translateX(-100%);
     overflow: hidden;
     border-right: none;
+    box-shadow: none;
 }
 
 /* Left Header & Search Section */
 .left-panel-header {
-    padding: 1.15rem 1.25rem 0.85rem;
+    padding: 1rem 1.15rem 0.75rem;
     background: var(--bg-surface);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.65rem;
     flex-shrink: 0;
 }
 
@@ -72,12 +81,21 @@
 }
 
 .left-panel-title {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 800;
     color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.left-panel-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--primary);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
 }
 
 .left-search-box {
@@ -121,18 +139,13 @@
     border: none;
     cursor: pointer;
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 16px;
     padding: 2px 4px;
+    display: none;
 }
 
-/* Filter Controls Row */
+/* Filter Controls Rows */
 .left-filter-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-}
-
-.left-filter-row-secondary {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
@@ -140,13 +153,14 @@
 
 .filter-select {
     padding: 0.45rem 0.65rem;
-    font-size: 0.785rem;
+    font-size: 0.775rem;
     border-radius: var(--radius-sm);
     background: var(--bg-surface-elevated);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
     font-weight: 600;
     cursor: pointer;
+    width: 100%;
 }
 
 .filter-select:focus {
@@ -156,7 +170,7 @@
 /* Quick Jump Location Pills */
 .left-quick-jumps {
     display: flex;
-    gap: 0.4rem;
+    gap: 0.35rem;
     overflow-x: auto;
     padding-bottom: 2px;
     scrollbar-width: none;
@@ -164,7 +178,7 @@
 .left-quick-jumps::-webkit-scrollbar { display: none; }
 
 .quick-pill {
-    padding: 3px 10px;
+    padding: 3px 9px;
     font-size: 0.725rem;
     font-weight: 700;
     border-radius: var(--radius-full);
@@ -184,7 +198,7 @@
 
 /* Counter & Sync Controls Bar */
 .left-status-bar {
-    padding: 0.65rem 1.25rem;
+    padding: 0.65rem 1.15rem;
     background: var(--bg-surface-elevated);
     border-bottom: 1px solid var(--border-color);
     display: flex;
@@ -213,10 +227,10 @@
 .map-cards-scroll-feed {
     flex: 1;
     overflow-y: auto;
-    padding: 0.85rem;
+    padding: 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.65rem;
 }
 
 /* Individual Property Card in Left Feed */
@@ -248,7 +262,7 @@
 
 .feed-card-thumb-wrap {
     width: 105px;
-    height: 90px;
+    height: 92px;
     border-radius: var(--radius-sm);
     overflow: hidden;
     position: relative;
@@ -276,6 +290,18 @@
 .feed-card-badge.rent { background: #2563eb; }
 .feed-card-badge.sale { background: #10b981; }
 
+.feed-card-urgency-badge {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    padding: 1px 5px;
+    border-radius: var(--radius-sm);
+    font-size: 8px;
+    font-weight: 800;
+    background: rgba(239, 68, 68, 0.92);
+    color: #ffffff;
+}
+
 .feed-card-info {
     flex: 1;
     display: flex;
@@ -285,7 +311,7 @@
 }
 
 .feed-card-price {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 800;
     color: var(--primary);
 }
@@ -297,8 +323,9 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.45;
+    line-height: 1.4;
     margin: 2px 0;
+    font-family: 'Battambang', 'Plus Jakarta Sans', sans-serif;
 }
 
 .feed-card-location {
@@ -310,6 +337,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-family: 'Battambang', 'Plus Jakarta Sans', sans-serif;
 }
 
 .feed-card-specs {
@@ -353,13 +381,14 @@
     display: flex;
     gap: 8px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .map-control-pill {
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    padding: 6px 14px;
+    padding: 6px 13px;
     border-radius: var(--radius-full);
     font-size: 0.785rem;
     font-weight: 700;
@@ -378,6 +407,20 @@
     transform: translateY(-1px);
 }
 
+.map-stat-badge-pill {
+    background: rgba(15, 23, 42, 0.85);
+    color: #ffffff;
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    font-size: 0.785rem;
+    font-weight: 700;
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 /* Basemap Layer Switcher (Google Roads, Satellite, Hybrid, Dark) */
 .map-floating-basemap-box {
     position: absolute;
@@ -387,7 +430,7 @@
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 5px;
+    padding: 4px;
     box-shadow: var(--shadow-lg);
     display: flex;
     gap: 4px;
@@ -400,7 +443,7 @@
     color: var(--text-secondary);
     font-size: 0.75rem;
     font-weight: 700;
-    padding: 5px 10px;
+    padding: 6px 10px;
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -414,7 +457,7 @@
     color: #ffffff;
 }
 
-/* Custom Price Tag Marker Pin (Zillow Style) */
+/* Custom Price Tag Marker Pin (Zillow / Airbnb Style) */
 .price-pill-pin {
     background: #ffffff;
     color: #0f172a;
@@ -429,17 +472,19 @@
     gap: 4px;
     white-space: nowrap;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
     user-select: none;
 }
 
 .price-pill-pin:hover, .price-pill-pin.hovered {
-    transform: scale(1.15);
+    transform: scale(1.18);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
     z-index: 1000 !important;
 }
 
 .price-pill-pin.pin-rent {
     border-color: #2563eb;
+    color: #0f172a;
 }
 
 .price-pill-pin.pin-urgent {
@@ -487,7 +532,7 @@
 
 .leaflet-popup-content {
     margin: 0 !important;
-    width: 275px !important;
+    width: 280px !important;
     line-height: 1.35 !important;
 }
 
@@ -552,6 +597,7 @@
     color: var(--text-primary);
     margin-bottom: 0.35rem;
     line-height: 1.3;
+    font-family: 'Battambang', 'Plus Jakarta Sans', sans-serif;
 }
 
 .map-popup-location {
@@ -561,6 +607,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    font-family: 'Battambang', 'Plus Jakarta Sans', sans-serif;
 }
 
 .map-popup-footer {
@@ -591,8 +638,8 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 23, 42, 0.35);
-    backdrop-filter: blur(3px);
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
     z-index: 1500;
     display: flex;
     flex-direction: column;
@@ -600,7 +647,7 @@
     align-items: center;
     color: #ffffff;
     font-weight: 700;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.25s ease;
     pointer-events: none;
     opacity: 0;
 }
@@ -611,13 +658,13 @@
 }
 
 .spinner {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border: 3px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     border-top-color: #ffffff;
     animation: spin 0.8s ease-in-out infinite;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.6rem;
 }
 
 @keyframes spin {
@@ -639,7 +686,7 @@
 @endpush
 
 @section('content')
-<div class="map-layout-container">
+<div class="map-layout-container" id="map-layout-root">
     <!-- =====================================================================
          LEFT PANEL: Search, Interactive Filters & Property Cards
          ===================================================================== -->
@@ -651,7 +698,8 @@
                     <svg style="width:20px;height:20px;color:var(--primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                     </svg>
-                    <span>Listings Directory</span>
+                    <span>Listings</span>
+                    <span class="left-panel-badge" id="total-badge">{{ number_format($totalWithGps) }}</span>
                 </div>
 
                 <a href="{{ route('portal.properties') }}" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.75rem;" title="Switch to Grid View">
@@ -668,20 +716,20 @@
                     type="text" 
                     id="filter-search" 
                     placeholder="Search title, district, or project..." 
-                    oninput="debounceSearch()"
+                    oninput="onSearchInput(this.value)"
                 >
-                <button type="button" class="left-search-clear" onclick="clearSearch()" title="Clear">&times;</button>
+                <button type="button" id="search-clear-btn" class="left-search-clear" onclick="clearSearch()" title="Clear">&times;</button>
             </div>
 
             <!-- Filter Dropdowns Row 1 -->
             <div class="left-filter-row">
-                <select id="filter-listing-type" class="filter-select" onchange="loadMapProperties()">
+                <select id="filter-listing-type" class="filter-select" onchange="applyFilters()">
                     <option value="">All Markets (Sale & Rent)</option>
                     <option value="Sale">🏷️ For Sale</option>
                     <option value="Rent">🔑 For Rent</option>
                 </select>
 
-                <select id="filter-property-type" class="filter-select" onchange="loadMapProperties()">
+                <select id="filter-property-type" class="filter-select" onchange="applyFilters()">
                     <option value="">All Property Types</option>
                     @foreach($propertyTypes as $type)
                         <option value="{{ $type }}">{{ $type }}</option>
@@ -690,7 +738,7 @@
             </div>
 
             <!-- Filter Dropdowns Row 2 -->
-            <div class="left-filter-row-secondary">
+            <div class="left-filter-row">
                 <select id="filter-province" class="filter-select" onchange="onProvinceSelect(this.value)">
                     <option value="">All Provinces</option>
                     @foreach($provinces as $prov)
@@ -698,7 +746,7 @@
                     @endforeach
                 </select>
 
-                <select id="filter-source" class="filter-select" onchange="loadMapProperties()">
+                <select id="filter-source" class="filter-select" onchange="applyFilters()">
                     <option value="">All Portals (6 Sources)</option>
                     <option value="cambodia_re">Century 21 (C21)</option>
                     <option value="arc">ARC Cambodia</option>
@@ -715,17 +763,19 @@
                 <button type="button" class="quick-pill" onclick="panToLocation(11.5732, 104.8988, 14)">Toul Kork</button>
                 <button type="button" class="quick-pill" onclick="panToLocation(11.5505, 104.9265, 15)">BKK1</button>
                 <button type="button" class="quick-pill" onclick="panToLocation(11.5830, 104.8624, 14)">Sen Sok</button>
+                <button type="button" class="quick-pill" onclick="panToLocation(11.5200, 104.9600, 14)">Chbar Ampov</button>
                 <button type="button" class="quick-pill" onclick="panToLocation(13.3671, 103.8448, 13)">Siem Reap</button>
                 <button type="button" class="quick-pill" onclick="panToLocation(10.6275, 103.5221, 13)">Sihanoukville</button>
                 <button type="button" class="quick-pill" onclick="panToLocation(10.6104, 104.1815, 13)">Kampot</button>
-                <button type="button" class="quick-pill" onclick="panToLocation(12.5657, 104.9910, 8)">Cambodia</button>
+                <button type="button" class="quick-pill" onclick="panToLocation(13.0957, 103.2022, 13)">Battambang</button>
+                <button type="button" class="quick-pill" onclick="panToLocation(12.5657, 104.9910, 8)">All Cambodia</button>
             </div>
         </div>
 
         <!-- Result Status & Auto Sync -->
         <div class="left-status-bar">
             <span class="results-counter" id="matching-counter">
-                Loading listings...
+                Loading all listings...
             </span>
 
             <label class="sync-toggle-label" title="Automatically reload listings when you move or zoom the map">
@@ -749,19 +799,30 @@
 
         <!-- Floating Left-Panel Collapse Toggle -->
         <div class="map-floating-topbar">
-            <button type="button" class="map-control-pill" id="toggle-panel-btn" onclick="toggleLeftPanel()">
+            <button type="button" class="map-control-pill" id="toggle-panel-btn" onclick="toggleLeftPanel()" title="Toggle Listings Side Panel">
                 <svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
                 </svg>
-                <span id="toggle-panel-text">Toggle Listings</span>
+                <span id="toggle-panel-text">Hide Listings</span>
             </button>
 
-            <button type="button" class="map-control-pill" onclick="resetMapBounds()">
+            <button type="button" class="map-control-pill" id="theater-btn" onclick="toggleTheaterMode()" title="Toggle Edge-to-Edge Full View">
+                <svg style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+                <span id="theater-text">Theater Mode</span>
+            </button>
+
+            <button type="button" class="map-control-pill" onclick="resetMapBounds()" title="Reset to Cambodia Overview">
                 <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 <span>Reset View</span>
             </button>
+
+            <div class="map-stat-badge-pill" id="map-pill-counter">
+                <span>📍 Loading all Cambodia listings...</span>
+            </div>
         </div>
 
         <!-- Floating Basemap Selector (Google Roadmap, Satellite, Hybrid, Dark) -->
@@ -781,9 +842,9 @@
         </div>
 
         <!-- Loading Overlay -->
-        <div id="map-loading-overlay" class="map-loading-overlay">
+        <div id="map-loading-overlay" class="map-loading-overlay active">
             <div class="spinner"></div>
-            <span>Plotting Cambodian listings on Google Map...</span>
+            <span id="loading-overlay-text">Plotting 19,783 Cambodian listings on Google Map...</span>
         </div>
     </main>
 </div>
@@ -799,8 +860,9 @@
 let map = null;
 let currentLayer = null;
 let markerClusterGroup = null;
-let propertiesData = [];
-let markersMap = new Map(); // property id -> L.marker
+let allProperties = [];      // Entire dataset (all 19,783)
+let filteredProperties = []; // Filtered by search/type/market/province
+let markersMap = new Map();  // id -> L.marker
 let searchDebounceTimer = null;
 let isSyncingBounds = true;
 
@@ -834,7 +896,7 @@ const basemapLayers = {
 
 document.addEventListener('DOMContentLoaded', function() {
     initGoogleMap();
-    loadMapProperties();
+    fetchAllMapProperties();
 });
 
 function initGoogleMap() {
@@ -852,9 +914,12 @@ function initGoogleMap() {
     currentLayer = basemapLayers.streets;
     currentLayer.addTo(map);
 
-    // Marker Cluster Setup
+    // Marker Cluster Setup with chunkedLoading for 20,000+ points
     markerClusterGroup = L.markerClusterGroup({
-        maxClusterRadius: 40,
+        chunkedLoading: true,
+        chunkInterval: 60,
+        chunkDelay: 10,
+        maxClusterRadius: 45,
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: false,
         disableClusteringAtZoom: 18
@@ -890,52 +955,57 @@ function panToLocation(lat, lng, zoom) {
     if (!map) return;
     map.flyTo([lat, lng], zoom, {
         animate: true,
-        duration: 1.2
+        duration: 1.1
     });
 
     document.querySelectorAll('.quick-pill').forEach(p => p.classList.remove('active'));
-    if (event && event.target) {
-        event.target.classList.add('active');
+    if (window.event && window.event.target && window.event.target.classList.contains('quick-pill')) {
+        window.event.target.classList.add('active');
     }
 }
 
 function onProvinceSelect(provinceName) {
-    if (!provinceName) {
-        loadMapProperties();
-        return;
+    if (provinceName) {
+        const centers = {
+            'Phnom Penh': [11.5564, 104.9282, 13],
+            'Siem Reap': [13.3671, 103.8448, 13],
+            'Preah Sihanouk': [10.6275, 103.5221, 13],
+            'Sihanoukville': [10.6275, 103.5221, 13],
+            'Kandal': [11.4550, 104.9810, 12],
+            'Kampot': [10.6104, 104.1815, 13],
+            'Battambang': [13.0957, 103.2022, 13],
+            'Kep': [10.4829, 104.3167, 13],
+            'Koh Kong': [11.6153, 102.9838, 12],
+            'Kampong Speu': [11.4533, 104.5209, 12]
+        };
+
+        if (centers[provinceName]) {
+            const [lat, lng, z] = centers[provinceName];
+            map.flyTo([lat, lng], z, { animate: true, duration: 1.0 });
+        }
     }
 
-    const centers = {
-        'Phnom Penh': [11.5564, 104.9282, 13],
-        'Siem Reap': [13.3671, 103.8448, 13],
-        'Preah Sihanouk': [10.6275, 103.5221, 13],
-        'Sihanoukville': [10.6275, 103.5221, 13],
-        'Kandal': [11.4550, 104.9810, 12],
-        'Kampot': [10.6104, 104.1815, 13],
-        'Battambang': [13.0957, 103.2022, 13],
-        'Kep': [10.4829, 104.3167, 13],
-        'Koh Kong': [11.6153, 102.9838, 12],
-        'Kampong Speu': [11.4533, 104.5209, 12]
-    };
-
-    if (centers[provinceName]) {
-        const [lat, lng, z] = centers[provinceName];
-        map.flyTo([lat, lng], z, { animate: true, duration: 1.0 });
-    }
-
-    loadMapProperties();
+    applyFilters();
 }
 
-function debounceSearch() {
+function onSearchInput(val) {
+    const clearBtn = document.getElementById('search-clear-btn');
+    if (clearBtn) {
+        clearBtn.style.display = val.trim() ? 'block' : 'none';
+    }
+
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
-        loadMapProperties();
-    }, 350);
+        applyFilters();
+    }, 250);
 }
 
 function clearSearch() {
-    document.getElementById('filter-search').value = '';
-    loadMapProperties();
+    const input = document.getElementById('filter-search');
+    input.value = '';
+    const clearBtn = document.getElementById('search-clear-btn');
+    if (clearBtn) clearBtn.style.display = 'none';
+    applyFilters();
 }
 
 function onSyncToggle(enabled) {
@@ -943,48 +1013,35 @@ function onSyncToggle(enabled) {
     if (isSyncingBounds) {
         filterVisiblePropertiesInViewport();
     } else {
-        renderLeftCards(propertiesData);
+        renderLeftCards(filteredProperties);
     }
 }
 
-// Fetch Filtered Properties from API and Plot on Map
-function loadMapProperties() {
+// Fetch ALL Cambodian Properties from API
+function fetchAllMapProperties() {
     const overlay = document.getElementById('map-loading-overlay');
     if (overlay) overlay.classList.add('active');
 
-    const search = document.getElementById('filter-search').value.trim();
-    const listingType = document.getElementById('filter-listing-type').value;
-    const propertyType = document.getElementById('filter-property-type').value;
-    const province = document.getElementById('filter-province').value;
-    const source = document.getElementById('filter-source').value;
-
-    const params = new URLSearchParams({
-        limit: 1500
-    });
-
-    if (search) params.append('search', search);
-    if (listingType) params.append('listing_type', listingType);
-    if (propertyType) params.append('type', propertyType);
-    if (province) params.append('province', province);
-    if (source) params.append('source', source);
-
-    fetch(`{{ route('portal.map.api') }}?${params.toString()}`)
+    // Request all properties up to 30,000 (covers entire 19,783 dataset)
+    fetch(`{{ route('portal.map.api') }}?limit=30000`)
         .then(res => res.json())
         .then(res => {
             if (res.success && res.properties) {
-                propertiesData = res.properties;
-                plotMarkersOnMap(propertiesData);
-                
+                allProperties = res.properties;
+                filteredProperties = allProperties;
+
+                const totalBadge = document.getElementById('total-badge');
+                if (totalBadge) totalBadge.innerText = allProperties.length.toLocaleString();
+
+                plotMarkersOnMap(filteredProperties);
+
                 if (isSyncingBounds) {
                     filterVisiblePropertiesInViewport();
                 } else {
-                    renderLeftCards(propertiesData);
+                    renderLeftCards(filteredProperties);
                 }
 
-                const counter = document.getElementById('matching-counter');
-                if (counter) {
-                    counter.innerText = `${res.count.toLocaleString()} properties on map`;
-                }
+                updateCounterBadges(filteredProperties.length, allProperties.length);
             }
         })
         .catch(err => {
@@ -995,14 +1052,74 @@ function loadMapProperties() {
         });
 }
 
+// Client-side Instant Filtering
+function applyFilters() {
+    const search = document.getElementById('filter-search').value.trim().toLowerCase();
+    const listingType = document.getElementById('filter-listing-type').value;
+    const propertyType = document.getElementById('filter-property-type').value;
+    const province = document.getElementById('filter-province').value.toLowerCase();
+    const source = document.getElementById('filter-source').value;
+
+    filteredProperties = allProperties.filter(item => {
+        if (listingType && item.listing_type !== listingType) {
+            return false;
+        }
+
+        if (propertyType && item.property_type !== propertyType) {
+            return false;
+        }
+
+        if (province) {
+            const itemProv = (item.province || '').toLowerCase();
+            const itemDist = (item.district || '').toLowerCase();
+            const itemLoc = (item.location || '').toLowerCase();
+            if (!itemProv.includes(province) && !itemDist.includes(province) && !itemLoc.includes(province)) {
+                return false;
+            }
+        }
+
+        if (source && item.source !== source) {
+            return false;
+        }
+
+        if (search) {
+            const title = (item.title || '').toLowerCase();
+            const loc = (item.location || '').toLowerCase();
+            const dist = (item.district || '').toLowerCase();
+            const prov = (item.province || '').toLowerCase();
+            const src = (item.source_name || '').toLowerCase();
+
+            if (!title.includes(search) && !loc.includes(search) && !dist.includes(search) && !prov.includes(search) && !src.includes(search)) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+
+    plotMarkersOnMap(filteredProperties);
+
+    if (isSyncingBounds) {
+        filterVisiblePropertiesInViewport();
+    } else {
+        renderLeftCards(filteredProperties);
+    }
+
+    updateCounterBadges(filteredProperties.length, allProperties.length);
+}
+
+// Plot Markers using Bulk Batching for Max Performance
 function plotMarkersOnMap(properties) {
     if (!markerClusterGroup) return;
 
     markerClusterGroup.clearLayers();
     markersMap.clear();
 
-    properties.forEach(item => {
-        if (!item.lat || !item.lng) return;
+    const markers = [];
+
+    for (let i = 0; i < properties.length; i++) {
+        const item = properties[i];
+        if (!item.lat || !item.lng) continue;
 
         const isRent = (item.listing_type || '').toLowerCase() === 'rent';
         const isUrgent = !!item.urgency_tag;
@@ -1056,14 +1173,17 @@ function plotMarkersOnMap(properties) {
             </div>
         `;
 
-        marker.bindPopup(popupContent, { maxWidth: 280 });
+        marker.bindPopup(popupContent, { maxWidth: 285 });
         marker.on('click', () => {
             highlightFeedCard(item.id);
         });
 
-        markerClusterGroup.addLayer(marker);
+        markers.push(marker);
         markersMap.set(item.id, marker);
-    });
+    }
+
+    // Add all markers in bulk chunked layers
+    markerClusterGroup.addLayers(markers);
 }
 
 // Filters visible properties within map bounds
@@ -1071,16 +1191,28 @@ function filterVisiblePropertiesInViewport() {
     if (!map) return;
     const bounds = map.getBounds();
 
-    const visibleProperties = propertiesData.filter(item => {
+    const visibleProperties = filteredProperties.filter(item => {
         if (!item.lat || !item.lng) return false;
         return bounds.contains([item.lat, item.lng]);
     });
 
     renderLeftCards(visibleProperties);
+    updateCounterBadges(visibleProperties.length, filteredProperties.length);
+}
 
+function updateCounterBadges(inViewCount, totalMatchingCount) {
     const counter = document.getElementById('matching-counter');
     if (counter) {
-        counter.innerText = `${visibleProperties.length.toLocaleString()} in view (${propertiesData.length.toLocaleString()} total)`;
+        if (isSyncingBounds) {
+            counter.innerText = `${inViewCount.toLocaleString()} in view (${totalMatchingCount.toLocaleString()} total)`;
+        } else {
+            counter.innerText = `${totalMatchingCount.toLocaleString()} matching listings`;
+        }
+    }
+
+    const pillCounter = document.getElementById('map-pill-counter');
+    if (pillCounter) {
+        pillCounter.innerText = `📍 ${totalMatchingCount.toLocaleString()} listings plotted`;
     }
 }
 
@@ -1096,14 +1228,17 @@ function renderLeftCards(properties) {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
                 <p style="font-size: 0.85rem; font-weight: 600;">No properties found in this view.</p>
-                <p style="font-size: 0.75rem; margin-top: 4px;">Try zooming out or clearing your search filter.</p>
+                <p style="font-size: 0.75rem; margin-top: 4px;">Try zooming out or clearing your search filters.</p>
             </div>
         `;
         return;
     }
 
+    // Render up to 80 cards to maintain silky-smooth 60fps scrolling
     const cardsHtml = properties.slice(0, 80).map(item => {
         const isRent = (item.listing_type || '').toLowerCase() === 'rent';
+        const isUrgent = !!item.urgency_tag;
+
         return `
             <div 
                 class="property-feed-card" 
@@ -1117,6 +1252,7 @@ function renderLeftCards(properties) {
                     <span class="feed-card-badge ${isRent ? 'rent' : 'sale'}">
                         ${item.listing_type}
                     </span>
+                    ${isUrgent ? `<span class="feed-card-urgency-badge">🔥 HOT</span>` : ''}
                 </div>
                 <div class="feed-card-info">
                     <div>
@@ -1148,13 +1284,13 @@ function panToProperty(id) {
     if (!marker || !map) return;
 
     const latLng = marker.getLatLng();
-    map.flyTo(latLng, 17, { animate: true, duration: 0.9 });
+    map.flyTo(latLng, 17, { animate: true, duration: 0.8 });
 
     setTimeout(() => {
         markerClusterGroup.zoomToShowLayer(marker, () => {
             marker.openPopup();
         });
-    }, 350);
+    }, 300);
 
     highlightFeedCard(id);
 }
@@ -1185,12 +1321,29 @@ function toggleLeftPanel() {
     panel.classList.toggle('collapsed');
     const isCollapsed = panel.classList.contains('collapsed');
     if (text) {
-        text.innerText = isCollapsed ? 'Show Listings' : 'Full Map';
+        text.innerText = isCollapsed ? 'Show Listings' : 'Hide Listings';
     }
 
     setTimeout(() => {
         if (map) map.invalidateSize();
-    }, 250);
+    }, 280);
+}
+
+// Toggle Theater Mode: Collapses portal navigation sidebar
+function toggleTheaterMode() {
+    const appLayout = document.getElementById('map-layout-root').closest('.app-layout');
+    const text = document.getElementById('theater-text');
+    if (!appLayout) return;
+
+    appLayout.classList.toggle('map-theater-mode');
+    const isTheater = appLayout.classList.contains('map-theater-mode');
+    if (text) {
+        text.innerText = isTheater ? 'Standard View' : 'Theater Mode';
+    }
+
+    setTimeout(() => {
+        if (map) map.invalidateSize();
+    }, 320);
 }
 
 function resetMapBounds() {
@@ -1199,7 +1352,7 @@ function resetMapBounds() {
 
 function escapeHtml(text) {
     if (!text) return '';
-    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 </script>
 @endpush
