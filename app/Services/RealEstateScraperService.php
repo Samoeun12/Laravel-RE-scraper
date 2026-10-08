@@ -6,6 +6,7 @@ use App\Models\Property;
 use App\Models\ScraperTask;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Services\GeocodingService;
 
 class RealEstateScraperService
 {
@@ -758,8 +759,8 @@ class RealEstateScraperService
                 $imageUrl = !empty($urls[0]) ? $urls[0] : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80';
 
                 // High precision GPS coordinates
-                $lat = !empty($it['position']['lat']) ? (float) $it['position']['lat'] : (!empty($it['geolocation']['coordinates'][1]) ? (float) $it['geolocation']['coordinates'][1] : null);
-                $lng = !empty($it['position']['lng']) ? (float) $it['position']['lng'] : (!empty($it['geolocation']['coordinates'][0]) ? (float) $it['geolocation']['coordinates'][0] : null);
+                $rawLat = !empty($it['position']['lat']) ? (float) $it['position']['lat'] : (!empty($it['geolocation']['coordinates'][1]) ? (float) $it['geolocation']['coordinates'][1] : null);
+                $rawLng = !empty($it['position']['lng']) ? (float) $it['position']['lng'] : (!empty($it['geolocation']['coordinates'][0]) ? (float) $it['geolocation']['coordinates'][0] : null);
 
                 // Beds / Baths
                 $bedrooms = !empty($it['numBed']) && (int) $it['numBed'] > 0 ? (int) $it['numBed'] : null;
@@ -772,6 +773,22 @@ class RealEstateScraperService
                 if ($rawAddress === '-' || empty($rawAddress)) {
                     $rawAddress = $district ? "{$district}, {$province}" : $province;
                 }
+
+                // Strictly validate & geocode location to prevent cross-province displacement
+                $geo = GeocodingService::resolveCoordinates(
+                    $rawLat,
+                    $rawLng,
+                    $province,
+                    $district,
+                    null,
+                    $title,
+                    $rawAddress,
+                    crc32($pid)
+                );
+                $lat = $geo['lat'];
+                $lng = $geo['lng'];
+                $province = $geo['province'];
+                $district = $geo['district'];
 
                 // Detail URL
                 $propertyUrl = "https://bayonapp.com/#/properties/{$pid}";
