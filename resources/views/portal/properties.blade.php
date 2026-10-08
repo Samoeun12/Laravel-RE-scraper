@@ -91,7 +91,7 @@
             <div class="property-thumb-wrapper">
                 <img src="{{ $item->image_url ?? 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80' }}" alt="{{ $item->title }}" class="property-thumb" loading="lazy">
                 
-                <span class="property-tag-badge">
+                <span class="property-tag-badge {{ strtolower($item->listing_type) === 'rent' ? 'badge-rent' : 'badge-sale' }}">
                     {{ $item->listing_type }} &bull; {{ $item->property_type }}
                 </span>
 

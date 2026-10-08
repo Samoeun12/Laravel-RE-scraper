@@ -1,1 +1,1 @@
-*.sqlite*
+# Allow database.sqlite to be tracked for deployment

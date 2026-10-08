@@ -72,7 +72,23 @@ class Property extends Model
         if ($val <= 0) {
             return 'Contact for Price';
         }
-        return '$' . number_format($val, 0);
+
+        $isRent = strtolower($this->listing_type ?? '') === 'rent';
+
+        // Anomaly handling for sale listings with tiny placeholder or unit prices ($1 - $49)
+        if (!$isRent && $val < 50) {
+            if ($this->area_sqm && $this->area_sqm > 50) {
+                $totalVal = round($val * $this->area_sqm);
+                return '$' . number_format($totalVal, 0) . ' ($' . number_format($val, 1) . '/m²)';
+            }
+            return 'Contact for Price';
+        }
+
+        $formatted = '$' . number_format($val, 0);
+        if ($isRent) {
+            return $formatted . '/mo';
+        }
+        return $formatted;
     }
 
     public function getDisplayLocationAttribute()
@@ -86,6 +102,11 @@ class Property extends Model
 
     public function getComputedPricePerSqmAttribute()
     {
+        // Suppress $/sqm for rentals to avoid confusing metrics like $4/m²
+        if (strtolower($this->listing_type ?? '') === 'rent') {
+            return null;
+        }
+
         if ($this->price_per_sqm && $this->price_per_sqm > 0) {
             return $this->price_per_sqm;
         }

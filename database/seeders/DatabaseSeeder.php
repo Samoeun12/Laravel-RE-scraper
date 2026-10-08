@@ -52,7 +52,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'All Categories',
                 'status' => 'completed',
                 'frequency' => 'Every 3 Hours',
-                'items_scraped' => 8759,
+                'items_scraped' => Property::where('source', 'cambodia_re')->count() ?: 8759,
                 'last_log' => 'Active Houzez REST API integration ready for real-time querying.',
             ],
             [
@@ -62,7 +62,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Land & Villas',
                 'status' => 'completed',
                 'frequency' => 'Every 6 Hours',
-                'items_scraped' => 2926,
+                'items_scraped' => Property::where('source', 'arc')->count() ?: 2954,
                 'last_log' => 'Direct PMS API endpoint with map coordinates connected.',
             ],
             [
@@ -72,7 +72,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Residential & Commercial',
                 'status' => 'completed',
                 'frequency' => 'Every 4 Hours',
-                'items_scraped' => 5368,
+                'items_scraped' => Property::where('source', 'khmer24')->count() ?: 5368,
                 'last_log' => 'Marketplace listings and seller contacts parsed.',
             ],
             [
@@ -82,7 +82,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Condo & Land',
                 'status' => 'completed',
                 'frequency' => 'Every 6 Hours',
-                'items_scraped' => 2553,
+                'items_scraped' => Property::where('source', 'realestate')->count() ?: 2561,
                 'last_log' => 'Verified price trends and schema records indexed.',
             ],
             [
@@ -92,7 +92,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Borey & High-Rises',
                 'status' => 'completed',
                 'frequency' => 'Daily',
-                'items_scraped' => 85,
+                'items_scraped' => Property::where('source', 'harbor')->count() ?: 85,
                 'last_log' => 'Harbor API verified.',
             ],
             [
@@ -102,7 +102,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Borey & Luxury Residential',
                 'status' => 'completed',
                 'frequency' => 'Every 4 Hours',
-                'items_scraped' => 50,
+                'items_scraped' => Property::where('source', 'propnex')->count() ?: 50,
                 'last_log' => 'OpenAPI v1 endpoint connected. Borey and villa inventory parsed.',
             ],
         ];
@@ -117,9 +117,9 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // 3. Load Real Curated Cambodian Properties Seed
+        // 3. Load Real Curated Cambodian Properties Seed (only if database is empty)
         $seedPath = __DIR__ . '/cambodia_properties_seed.json';
-        if (file_exists($seedPath)) {
+        if (Property::count() === 0 && file_exists($seedPath)) {
             $json = file_get_contents($seedPath);
             $items = json_decode($json, true) ?: [];
 
