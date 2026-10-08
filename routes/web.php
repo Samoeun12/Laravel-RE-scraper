@@ -55,6 +55,19 @@ Route::middleware('auth')->group(function () {
         Route::post('/profile', [PortalController::class, 'updateProfile'])->name('profile.update');
         Route::post('/password', [PortalController::class, 'updatePassword'])->name('password.update');
 
+        // User Management
+        Route::get('/users', [PortalController::class, 'users'])->name('users');
+        Route::post('/users', [PortalController::class, 'storeUser'])->name('users.store');
+        Route::put('/users/{id}', [PortalController::class, 'updateUser'])->name('users.update');
+        Route::delete('/users/{id}', [PortalController::class, 'deleteUser'])->name('users.delete');
+        Route::post('/users/{id}/toggle-status', [PortalController::class, 'toggleUserStatus'])->name('users.toggle-status');
+
+        // Permission & Access Control
+        Route::get('/permissions', [PortalController::class, 'permissions'])->name('permissions');
+        Route::post('/permissions/roles', [PortalController::class, 'storeRole'])->name('permissions.roles.store');
+        Route::post('/permissions/matrix', [PortalController::class, 'updatePermissionMatrix'])->name('permissions.matrix');
+        Route::delete('/permissions/roles/{id}', [PortalController::class, 'deleteRole'])->name('permissions.roles.delete');
+
         // Theme Preference API
         Route::post('/update-theme', [PortalController::class, 'updateTheme'])->name('theme.update');
     });

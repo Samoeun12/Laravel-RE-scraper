@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
+use App\Models\Permission;
 use App\Models\Property;
+use App\Models\Role;
 use App\Models\ScraperTask;
 use App\Models\User;
 use App\Services\RealEstateScraperService;
@@ -11,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class PortalController extends Controller
@@ -755,5 +758,328 @@ class PortalController extends Controller
             'theme' => $theme,
             'message' => 'Theme updated to ' . ucfirst($theme),
         ]);
+    }
+
+    /**
+     * User Management View.
+     */
+    public function users(Request $request)
+    {
+        $query = User::with('roleModel')->withCount(['properties', 'scraperTasks']);
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('title', 'like', "%{$search}%")
+                  ->orWhere('role', 'like', "%{$search}%");
+            });
+        }
+
+        if ($roleId = $request->input('role_id')) {
+            $query->where('role_id', $roleId);
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        $users = $query->latest('id')->paginate(12)->withQueryString();
+        $roles = Role::withCount('users')->get();
+
+        $stats = [
+            'total' => User::count(),
+            'active' => User::where('status', 'active')->count(),
+            'suspended' => User::where('status', 'suspended')->count(),
+            'admins' => User::where('role', 'Administrator')->count(),
+            'operators' => User::where('role', 'Scraper Operator')->count(),
+            'analysts' => User::where('role', 'Real Estate Analyst')->count(),
+        ];
+
+        return view('portal.users', compact('users', 'roles', 'stats'));
+    }
+
+    /**
+     * Store new User Account.
+     */
+    public function storeUser(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'role_id' => ['required', 'exists:roles,id'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'status' => ['required', 'in:active,suspended'],
+            'password' => ['required', 'string', Password::min(8)],
+            'avatar' => ['nullable', 'url'],
+        ]);
+
+        $role = Role::findOrFail($validated['role_id']);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role' => $role->name,
+            'role_id' => $role->id,
+            'title' => $validated['title'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'status' => $validated['status'],
+            'password' => Hash::make($validated['password']),
+            'avatar' => $validated['avatar'] ?? null,
+            'theme_preference' => 'system',
+        ]);
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Created User',
+            'description' => "Created account for {$user->name} ({$user->email}) with role {$role->name}",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', "User '{$user->name}' created successfully.");
+    }
+
+    /**
+     * Update existing User.
+     */
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'role_id' => ['required', 'exists:roles,id'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'status' => ['required', 'in:active,suspended'],
+            'password' => ['nullable', 'string', Password::min(8)],
+            'avatar' => ['nullable', 'url'],
+        ]);
+
+        $role = Role::findOrFail($validated['role_id']);
+
+        // Prevent suspending self
+        if ($user->id === Auth::id() && $validated['status'] === 'suspended') {
+            return back()->withErrors(['status' => 'You cannot suspend your own administrative account.']);
+        }
+
+        $data = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role' => $role->name,
+            'role_id' => $role->id,
+            'title' => $validated['title'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'status' => $validated['status'],
+            'avatar' => $validated['avatar'] ?? $user->avatar,
+        ];
+
+        if (!empty($validated['password'])) {
+            $data['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($data);
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Updated User',
+            'description' => "Updated user profile for {$user->name} ({$user->email})",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', "User '{$user->name}' updated successfully.");
+    }
+
+    /**
+     * Delete User account.
+     */
+    public function deleteUser($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->id === Auth::id()) {
+            return back()->withErrors(['delete' => 'You cannot delete your own account while logged in.']);
+        }
+
+        $name = $user->name;
+        $user->delete();
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Deleted User',
+            'description' => "Removed user account: {$name}",
+            'ip_address' => request()->ip(),
+        ]);
+
+        return back()->with('info', "User account '{$name}' has been deleted.");
+    }
+
+    /**
+     * Toggle User status between active and suspended.
+     */
+    public function toggleUserStatus($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->id === Auth::id()) {
+            return back()->withErrors(['status' => 'You cannot suspend your own administrative account.']);
+        }
+
+        $newStatus = $user->status === 'active' ? 'suspended' : 'active';
+        $user->update(['status' => $newStatus]);
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Changed User Status',
+            'description' => "Changed status of {$user->name} to {$newStatus}",
+            'ip_address' => request()->ip(),
+        ]);
+
+        return back()->with('success', "User status updated to {$newStatus}.");
+    }
+
+    /**
+     * Permission Access Control & RBAC Matrix View.
+     */
+    public function permissions(Request $request)
+    {
+        $roles = Role::with(['permissions', 'users'])->get();
+        $permissions = Permission::all()->groupBy('module');
+        $recentUsers = User::with('roleModel')->latest('id')->take(6)->get();
+
+        return view('portal.permissions', compact('roles', 'permissions', 'recentUsers'));
+    }
+
+    /**
+     * Create new Custom Role.
+     */
+    public function storeRole(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'badge_color' => ['nullable', 'string', 'max:30'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['exists:permissions,id'],
+        ]);
+
+        $slug = Str::slug($validated['name'], '_');
+        $originalSlug = $slug;
+        $counter = 1;
+        while (Role::where('slug', $slug)->exists()) {
+            $slug = "{$originalSlug}_{$counter}";
+            $counter++;
+        }
+
+        $role = Role::create([
+            'name' => $validated['name'],
+            'slug' => $slug,
+            'description' => $validated['description'] ?? null,
+            'badge_color' => $validated['badge_color'] ?? '#6366f1',
+            'is_system' => false,
+        ]);
+
+        if (!empty($validated['permissions'])) {
+            $role->permissions()->sync($validated['permissions']);
+        }
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Created Role',
+            'description' => "Created RBAC role {$role->name} ({$role->slug})",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', "Role '{$role->name}' created successfully.");
+    }
+
+    /**
+     * Update Permission Matrix (Toggle individual permission or sync full matrix).
+     */
+    public function updatePermissionMatrix(Request $request)
+    {
+        if ($request->wantsJson()) {
+            $validated = $request->validate([
+                'role_id' => ['required', 'exists:roles,id'],
+                'permission_id' => ['required', 'exists:permissions,id'],
+                'granted' => ['required', 'boolean'],
+            ]);
+
+            $role = Role::findOrFail($validated['role_id']);
+            $permission = Permission::findOrFail($validated['permission_id']);
+
+            if ($role->slug === 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Administrator role inherently retains all system permissions.',
+                ], 422);
+            }
+
+            if ($validated['granted']) {
+                $role->permissions()->syncWithoutDetaching([$permission->id]);
+            } else {
+                $role->permissions()->detach($permission->id);
+            }
+
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'Updated Permission',
+                'description' => ($validated['granted'] ? 'Granted ' : 'Revoked ') . "{$permission->name} for role {$role->name}",
+                'ip_address' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Permission '{$permission->name}' " . ($validated['granted'] ? 'granted' : 'revoked') . " for {$role->name}.",
+            ]);
+        }
+
+        // Full matrix batch update
+        $matrix = $request->input('matrix', []);
+        foreach ($matrix as $roleId => $permissionIds) {
+            $role = Role::find($roleId);
+            if ($role && $role->slug !== 'admin') {
+                $role->permissions()->sync(array_keys($permissionIds));
+            }
+        }
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Batch Updated Permissions',
+            'description' => 'Updated role permissions matrix.',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', 'Permissions matrix updated successfully.');
+    }
+
+    /**
+     * Delete Custom Role.
+     */
+    public function deleteRole($id)
+    {
+        $role = Role::findOrFail($id);
+
+        if ($role->is_system) {
+            return back()->withErrors(['role' => 'System default roles cannot be deleted.']);
+        }
+
+        if ($role->users()->count() > 0) {
+            return back()->withErrors(['role' => "Cannot delete role '{$role->name}' because {$role->users()->count()} users are currently assigned to it. Reassign them first."]);
+        }
+
+        $name = $role->name;
+        $role->delete();
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Deleted Role',
+            'description' => "Removed RBAC role: {$name}",
+            'ip_address' => request()->ip(),
+        ]);
+
+        return back()->with('info', "Role '{$name}' has been deleted.");
     }
 }
