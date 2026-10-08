@@ -9,14 +9,41 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
 <style>
+/* Lock portal viewport for map view to prevent double scrollbars */
+body:has(.map-layout-container),
+html:has(.map-layout-container),
+body.map-page-body,
+html.map-page-body {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+}
+
+.app-layout:has(.map-layout-container),
+body.map-page-body .app-layout {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+}
+
+.main-wrapper:has(.map-layout-container),
+body.map-page-body .main-wrapper {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+}
+
 /* Override content-body container to allow full right-side edge-to-edge map bleed */
 .content-body {
     padding: 0 !important;
     max-width: 100% !important;
     height: calc(100vh - var(--topbar-height)) !important;
+    max-height: calc(100vh - var(--topbar-height)) !important;
+    min-height: 0 !important;
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
+    flex: 1 1 0 !important;
 }
 
 /* Theater Mode: Collapse portal sidebar for ultra-wide edge-to-edge GIS exploration */
@@ -29,8 +56,10 @@
 
 .map-layout-container {
     display: flex;
-    flex: 1;
+    flex: 1 1 0;
     height: 100%;
+    max-height: 100%;
+    min-height: 0;
     width: 100%;
     overflow: hidden;
     position: relative;
@@ -44,6 +73,8 @@
     min-width: 380px;
     max-width: 480px;
     height: 100%;
+    max-height: 100%;
+    min-height: 0;
     background: var(--bg-surface);
     border-right: 1px solid var(--border-color);
     display: flex;
@@ -51,6 +82,7 @@
     z-index: 25;
     transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s ease;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
 }
 
 .map-left-panel.collapsed {
@@ -225,7 +257,8 @@
 
 /* Scrollable Property Cards Feed */
 .map-cards-scroll-feed {
-    flex: 1;
+    flex: 1 1 0;
+    min-height: 0;
     overflow-y: auto;
     padding: 0.75rem;
     display: flex;
@@ -245,6 +278,8 @@
     cursor: pointer;
     transition: all var(--transition-fast);
     position: relative;
+    flex-shrink: 0;
+    min-height: 105px;
 }
 
 .property-feed-card:hover {
@@ -360,15 +395,19 @@
 .map-right-panel {
     flex: 1;
     height: 100%;
+    max-height: 100%;
+    min-height: 0;
     position: relative;
     display: flex;
     background: var(--bg-surface-elevated);
     min-width: 0;
+    overflow: hidden;
 }
 
 #listings-google-map {
     width: 100%;
-    height: 100%;
+    height: 100% !important;
+    min-height: 0 !important;
     z-index: 10;
 }
 
@@ -794,7 +833,7 @@
     <!-- =====================================================================
          RIGHT PANEL: Full Edge-to-Edge Google Map
          ===================================================================== -->
-    <main class="map-right-panel" id="map-right-panel">
+    <div class="map-right-panel" id="map-right-panel">
         <!-- Google Map Container -->
         <div id="listings-google-map"></div>
 
@@ -847,7 +886,7 @@
             <div class="spinner"></div>
             <span id="loading-overlay-text">Plotting 19,783 Cambodian listings on Google Map...</span>
         </div>
-    </main>
+    </div>
 </div>
 @endsection
 
@@ -857,6 +896,8 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <script>
+document.body.classList.add('map-page-body');
+
 // Map Instance & Layers
 let map = null;
 let currentLayer = null;
@@ -887,11 +928,10 @@ const basemapLayers = {
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
         attribution: '&copy; Google Maps Hybrid'
     }),
-    // Dark GIS Map (CartoDB)
-    dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 20,
-        subdomains: 'abcd',
-        attribution: '&copy; CartoDB &copy; OpenStreetMap'
+    // Dark GIS Map (ESRI World Dark Canvas - Clean & Fast)
+    dark: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 16,
+        attribution: '&copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
     })
 };
 

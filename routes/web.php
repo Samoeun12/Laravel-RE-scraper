@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('portal')->name('portal.')->group(function () {
         Route::get('/', [PortalController::class, 'dashboard'])->name('dashboard');
+        Route::redirect('/dashboard', '/portal');
         
         // Scraper Hub
         Route::middleware('permission:scrapers.view')->group(function () {
