@@ -251,6 +251,7 @@ class GeocodingService
      * Khmer Text to Province/District Mapper with exclusions.
      */
     public const KHMER_LOOKUP = [
+        ['ភ្នំពេញ', 'Phnom Penh', null],
         ['ព្រះសីហនុ', 'Preah Sihanouk', 'Krong Preah Sihanouk'],
         ['កំពង់សោម', 'Preah Sihanouk', 'Krong Preah Sihanouk'],
         ['សៀមរាប', 'Siem Reap', 'Krong Siem Reap'],
@@ -344,7 +345,7 @@ class GeocodingService
         // 1. Khmer keyword matching (avoiding 'ឈូក' false match for 'ឈូកវ៉ា')
         foreach (self::KHMER_LOOKUP as [$kh, $pMatch, $dMatch]) {
             if (str_contains($textHaystack, $kh)) {
-                if (empty($origProv) || $origProv === 'Phnom Penh' || $pMatch !== 'Phnom Penh') {
+                if (empty($origProv) || $origProv === 'Phnom Penh' || !in_array($origProv, array_keys(self::PROVINCE_BOUNDS)) || in_array($origProv, ['Belait', 'Mon', 'Bago (East)', 'Yangon']) || $pMatch !== 'Phnom Penh') {
                     $resolvedProv = $pMatch;
                 }
                 if ($dMatch && (empty($resolvedDist) || in_array($resolvedDist, ['Krong', 'District']))) {
@@ -381,6 +382,13 @@ class GeocodingService
             $resolvedProv = 'Kampong Chhnang';
         } elseif (isset(self::KHAN_CENTROIDS[$distLower])) {
             $resolvedProv = 'Phnom Penh';
+        }
+
+        // Clean up mismatched cross-province districts
+        if ($resolvedProv === 'Phnom Penh' && !empty($resolvedDist) && !isset(self::KHAN_CENTROIDS[mb_strtolower($resolvedDist)])) {
+            $resolvedDist = null;
+        } elseif ($resolvedProv !== 'Phnom Penh' && !empty($resolvedDist) && isset(self::KHAN_CENTROIDS[mb_strtolower($resolvedDist)])) {
+            $resolvedDist = null;
         }
 
         // 4. Validate existing coordinates
