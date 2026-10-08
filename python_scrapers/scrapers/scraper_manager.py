@@ -71,6 +71,8 @@ class ScraperManager:
                     p_target = 80   # Iterates until catalog end
                 elif source_key == "harbor":
                     p_target = 20   # All available catalog sections
+                elif source_key == "bayon":
+                    p_target = 270  # Iterates through full ~13,450 listings feed
                 elif source_key == "khmer24":
                     p_target = max(max_pages, 50)  # Deep feed mine
                 else:

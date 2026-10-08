@@ -15,7 +15,7 @@ class RunApiScrapers extends Command
      *
      * @var string
      */
-    protected $signature = 'scraper:run-apis {--source=all : The source to scrape (bayon, propnex, realestate, c21, arc, harbor, or all)} {--limit=50 : Items per portal}';
+    protected $signature = 'scraper:run-apis {--source=all : The source to scrape (bayon, propnex, realestate, c21, arc, harbor, or all)} {--limit=50 : Items per portal} {--all : Scrape all complete available listings}';
 
     /**
      * The console command description.
@@ -31,8 +31,9 @@ class RunApiScrapers extends Command
     {
         $source = strtolower($this->option('source'));
         $limit = (int) $this->option('limit');
+        $isAll = (bool) $this->option('all');
 
-        $this->info("🚀 Starting Direct API Real Estate Scraper Suite (Source: {$source}, Limit: {$limit})...");
+        $this->info("🚀 Starting Direct API Real Estate Scraper Suite (Source: {$source}, Limit: " . ($isAll ? 'ALL (Full Catalog)' : $limit) . ")...");
 
         $tasks = [
             'bayon' => [
@@ -95,7 +96,7 @@ class RunApiScrapers extends Command
             );
 
             $method = $info['method'];
-            $result = $service->$method($task, $limit);
+            $result = $service->$method($task, $limit, $isAll);
 
             if ($result['success'] ?? false) {
                 $this->info("  ✅ SUCCESS: " . ($result['message'] ?? 'Scraped successfully.'));

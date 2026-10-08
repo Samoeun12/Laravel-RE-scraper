@@ -12,32 +12,32 @@ class RealEstateScraperService
     /**
      * Dispatch scraper based on task name or source.
      */
-    public function executeTask(ScraperTask $task): array
+    public function executeTask(ScraperTask $task, int $limit = 50, bool $all = false): array
     {
         $source = strtolower($task->source_name);
 
         if (str_contains($source, 'century 21') || str_contains($source, 'cambodia-real-estate') || str_contains($source, 'cambodia_re')) {
-            return $this->scrapeCentury21($task);
+            return $this->scrapeCentury21($task, $limit, $all);
         }
 
         if (str_contains($source, 'arc') || str_contains($source, 'asia real estate')) {
-            return $this->scrapeARC($task);
+            return $this->scrapeARC($task, $limit, $all);
         }
 
         if (str_contains($source, 'harbor')) {
-            return $this->scrapeHarbor($task);
+            return $this->scrapeHarbor($task, $limit);
         }
 
         if (str_contains($source, 'realestate') || str_contains($source, 'real estate portal')) {
-            return $this->scrapeRealestateComKh($task);
+            return $this->scrapeRealestateComKh($task, $limit, $all);
         }
 
         if (str_contains($source, 'propnex')) {
-            return $this->scrapePropNex($task);
+            return $this->scrapePropNex($task, $limit, $all);
         }
 
         if (str_contains($source, 'bayon') || str_contains($source, 'bayonapp')) {
-            return $this->scrapeBayonApp($task);
+            return $this->scrapeBayonApp($task, $limit, $all);
         }
 
         // Generic mock crawl simulation for other web crawlers
@@ -60,23 +60,35 @@ class RealEstateScraperService
     /**
      * Live Ingestion from Century 21 Cambodia (WordPress Houzez REST API).
      */
-    public function scrapeCentury21(?ScraperTask $task = null, int $limit = 25): array
+    public function scrapeCentury21(?ScraperTask $task = null, int $limit = 25, bool $all = false): array
     {
         try {
-            $url = "https://cambodia-real-estate.com/wp-json/wp/v2/properties?per_page={$limit}";
-            $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-                'Accept' => 'application/json',
-            ])->timeout(15)->get($url);
-
-            if (!$response->successful()) {
-                throw new \Exception("C21 API responded with status " . $response->status());
-            }
-
-            $posts = $response->json();
+            $perPage = 50;
+            $maxHarvest = $all ? 10000 : max($limit, 25);
+            $page = 1;
             $count = 0;
 
-            foreach ($posts as $post) {
+            while ($count < $maxHarvest) {
+                $batchLimit = min($perPage, $maxHarvest - $count);
+                $url = "https://cambodia-real-estate.com/wp-json/wp/v2/properties?per_page={$batchLimit}&page={$page}";
+                $response = Http::withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+                    'Accept' => 'application/json',
+                ])->timeout(20)->get($url);
+
+                if (!$response->successful()) {
+                    if ($count > 0) break;
+                    throw new \Exception("C21 API responded with status " . $response->status());
+                }
+
+                $posts = $response->json();
+                if (empty($posts) || !is_array($posts)) {
+                    break;
+                }
+
+                $totalPages = (int) ($response->header('x-wp-totalpages') ?? 1);
+
+                foreach ($posts as $post) {
                 $pid = (string) ($post['id'] ?? '');
                 $rawTitle = html_entity_decode($post['title']['rendered'] ?? 'Century 21 Listing');
                 $link = $post['link'] ?? "https://cambodia-real-estate.com/property/{$post['slug']}/";
@@ -159,7 +171,17 @@ class RealEstateScraperService
                 $count++;
             }
 
-            if ($task) {
+            $page++;
+            if ($page > $totalPages) {
+                break;
+            }
+
+            if ($all) {
+                usleep(50000);
+            }
+        }
+
+        if ($task) {
                 $task->increment('items_scraped', $count);
                 $task->update([
                     'status' => 'completed',
@@ -186,9 +208,10 @@ class RealEstateScraperService
     /**
      * Live Ingestion from ARC (Asia Real Estate Cambodia PMS REST API).
      */
-    public function scrapeARC(?ScraperTask $task = null, int $limit = 25): array
+    public function scrapeARC(?ScraperTask $task = null, int $limit = 25, bool $all = false): array
     {
         try {
+            $effectiveLimit = $all ? 3500 : $limit;
             $url = "https://pms.arccambodia.com/v1/api/sale/website/property";
             $payload = [
                 'company' => '10',
@@ -205,7 +228,7 @@ class RealEstateScraperService
                 'priceTo' => 0,
                 'orderBy' => '',
                 'offset' => 0,
-                'limit' => $limit,
+                'limit' => $effectiveLimit,
             ];
 
             $response = Http::withHeaders([
@@ -347,25 +370,34 @@ class RealEstateScraperService
     /**
      * Live Ingestion from Realestate.com.kh REST API.
      */
-    public function scrapeRealestateComKh(?ScraperTask $task = null, int $limit = 50): array
+    public function scrapeRealestateComKh(?ScraperTask $task = null, int $limit = 50, bool $all = false): array
     {
         try {
-            $url = "https://www.realestate.com.kh/api/portal/pages/results/?pathname=/buy/&page=1&page_size={$limit}&search_languages=en,km,zh-hans";
-            $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
-                'Accept' => 'application/json, text/plain, */*',
-                'Referer' => 'https://www.realestate.com.kh/buy/',
-            ])->timeout(20)->get($url);
-
-            if (!$response->successful()) {
-                throw new \Exception("Realestate.com.kh API error HTTP " . $response->status());
-            }
-
-            $data = $response->json();
-            $results = $data['results'] ?? [];
+            $pageSize = 50;
+            $maxHarvest = $all ? 5000 : max($limit, 50);
+            $page = 1;
             $count = 0;
 
-            foreach ($results as $it) {
+            while ($count < $maxHarvest) {
+                $url = "https://www.realestate.com.kh/api/portal/pages/results/?pathname=/buy/&page={$page}&page_size={$pageSize}&search_languages=en,km,zh-hans";
+                $response = Http::withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+                    'Accept' => 'application/json, text/plain, */*',
+                    'Referer' => 'https://www.realestate.com.kh/buy/',
+                ])->timeout(20)->get($url);
+
+                if (!$response->successful()) {
+                    if ($count > 0) break;
+                    throw new \Exception("Realestate.com.kh API error HTTP " . $response->status());
+                }
+
+                $data = $response->json();
+                $results = $data['results'] ?? [];
+                if (empty($results)) {
+                    break;
+                }
+
+                foreach ($results as $it) {
                 $pid = (string) ($it['id'] ?? uniqid());
                 $title = trim($it['headline'] ?? $it['title_img_alt'] ?? "Realestate.com.kh Property {$pid}");
                 if (empty($title) || strlen($title) < 3) {
@@ -462,7 +494,17 @@ class RealEstateScraperService
                 $count++;
             }
 
-            if ($task) {
+            $page++;
+            if (count($results) < $pageSize) {
+                break;
+            }
+
+            if ($all) {
+                usleep(50000);
+            }
+        }
+
+        if ($task) {
                 $task->increment('items_scraped', $count);
                 $task->update([
                     'status' => 'completed',
@@ -489,24 +531,33 @@ class RealEstateScraperService
     /**
      * Live Ingestion from PropNex Cambodia OpenAPI REST API.
      */
-    public function scrapePropNex(?ScraperTask $task = null, int $limit = 50): array
+    public function scrapePropNex(?ScraperTask $task = null, int $limit = 50, bool $all = false): array
     {
         try {
-            $url = "https://www.propnexkh.com/api/v1/properties?page=1&page_size={$limit}";
-            $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
-                'Accept' => 'application/json',
-            ])->timeout(20)->get($url);
-
-            if (!$response->successful()) {
-                throw new \Exception("PropNex API error HTTP " . $response->status());
-            }
-
-            $data = $response->json();
-            $list = $data['data']['list'] ?? [];
+            $pageSize = 50;
+            $maxHarvest = $all ? 2000 : max($limit, 50);
+            $page = 1;
             $count = 0;
 
-            foreach ($list as $item) {
+            while ($count < $maxHarvest) {
+                $url = "https://www.propnexkh.com/api/v1/properties?page={$page}&page_size={$pageSize}";
+                $response = Http::withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+                    'Accept' => 'application/json',
+                ])->timeout(20)->get($url);
+
+                if (!$response->successful()) {
+                    if ($count > 0) break;
+                    throw new \Exception("PropNex API error HTTP " . $response->status());
+                }
+
+                $data = $response->json();
+                $list = $data['data']['list'] ?? [];
+                if (empty($list)) {
+                    break;
+                }
+
+                foreach ($list as $item) {
                 $pid = (string) ($item['id'] ?? uniqid());
                 $title = trim($item['name'] ?? "PropNex Property {$pid}");
                 if (empty($title)) {
@@ -564,7 +615,17 @@ class RealEstateScraperService
                 $count++;
             }
 
-            if ($task) {
+            $page++;
+            if (count($list) < $pageSize) {
+                break;
+            }
+
+            if ($all) {
+                usleep(50000);
+            }
+        }
+
+        if ($task) {
                 $task->increment('items_scraped', $count);
                 $task->update([
                     'status' => 'completed',
@@ -591,27 +652,37 @@ class RealEstateScraperService
     /**
      * Live Ingestion from Bayon App (bayonapp.com) REST API.
      */
-    public function scrapeBayonApp(?ScraperTask $task = null, int $limit = 50): array
+    public function scrapeBayonApp(?ScraperTask $task = null, int $limit = 50, bool $all = false): array
     {
         try {
-            $url = "https://agent.bayonapp.com/api/v1/property/fetch?skip=0&limit={$limit}";
-            $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-                'Accept' => 'application/json, text/plain, */*',
-                'token' => 'narongrealestate',
-                'Origin' => 'https://bayonapp.com',
-                'Referer' => 'https://bayonapp.com/',
-            ])->timeout(25)->get($url);
-
-            if (!$response->successful()) {
-                throw new \Exception("Bayon App API error HTTP " . $response->status());
-            }
-
-            $data = $response->json();
-            $content = $data['data']['content'] ?? [];
+            $batchSize = 50;
+            $maxHarvest = $all ? 15000 : max($limit, 50);
+            $skip = 0;
             $count = 0;
 
-            foreach ($content as $it) {
+            while ($count < $maxHarvest) {
+                $currentLimit = min($batchSize, $maxHarvest - $count);
+                $url = "https://agent.bayonapp.com/api/v1/property/fetch?skip={$skip}&limit={$currentLimit}";
+                $response = Http::withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+                    'Accept' => 'application/json, text/plain, */*',
+                    'token' => 'narongrealestate',
+                    'Origin' => 'https://bayonapp.com',
+                    'Referer' => 'https://bayonapp.com/',
+                ])->timeout(25)->get($url);
+
+                if (!$response->successful()) {
+                    if ($count > 0) break;
+                    throw new \Exception("Bayon App API error HTTP " . $response->status());
+                }
+
+                $data = $response->json();
+                $content = $data['data']['content'] ?? [];
+                if (empty($content)) {
+                    break;
+                }
+
+                foreach ($content as $it) {
                 $pid = (string) ($it['_id'] ?? $it['code'] ?? uniqid());
                 $code = trim((string) ($it['code'] ?? ''));
 
@@ -737,7 +808,17 @@ class RealEstateScraperService
                 $count++;
             }
 
-            if ($task) {
+            $skip += count($content);
+            if (count($content) < $currentLimit) {
+                break;
+            }
+
+            if ($all) {
+                usleep(50000);
+            }
+        }
+
+        if ($task) {
                 $task->increment('items_scraped', $count);
                 $task->update([
                     'status' => 'completed',
