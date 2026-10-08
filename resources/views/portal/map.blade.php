@@ -297,7 +297,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.3;
+    line-height: 1.45;
     margin: 2px 0;
 }
 
