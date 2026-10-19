@@ -15,6 +15,9 @@ Route::get('/', function () {
     return redirect()->route('portal.dashboard');
 });
 
+// Media / Image Proxy (Reliable loading for external CDNs like synassets)
+Route::get('/proxy/image', [PortalController::class, 'proxyImage'])->name('image.proxy');
+
 // Authentication Routes (Guest)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -42,6 +45,7 @@ Route::middleware('auth')->group(function () {
         // Properties / Listings & GIS Map
         Route::middleware('permission:properties.view')->group(function () {
             Route::get('/properties', [PortalController::class, 'properties'])->name('properties');
+            Route::get('/properties/{id}/details', [PortalController::class, 'propertyDetailsApi'])->name('properties.details');
             Route::post('/properties', [PortalController::class, 'storeProperty'])->name('properties.store')->middleware('permission:properties.create');
             Route::delete('/properties/{id}', [PortalController::class, 'deleteProperty'])->name('properties.delete')->middleware('permission:properties.delete');
 

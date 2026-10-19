@@ -2,6 +2,7 @@
 Database layer for Cambodia Real Estate Property listings using SQLite.
 """
 
+import json
 import sqlite3
 import pandas as pd
 from datetime import datetime
@@ -56,6 +57,8 @@ def init_db(db_path: str = DB_PATH):
             cursor.execute("ALTER TABLE properties ADD COLUMN latitude REAL")
         if "longitude" not in columns:
             cursor.execute("ALTER TABLE properties ADD COLUMN longitude REAL")
+        if "images" not in columns:
+            cursor.execute("ALTER TABLE properties ADD COLUMN images TEXT")
 
         # Indexes for rapid query and filtering
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_properties_source ON properties(source)")
@@ -116,12 +119,12 @@ def upsert_property(item: Dict[str, Any], db_path: str = DB_PATH) -> bool:
             INSERT INTO properties (
                 source, source_id, title, property_type, listing_type,
                 price_usd, area_sqm, price_per_sqm, province, district,
-                commune, address, bedrooms, bathrooms, url, image_url,
+                commune, address, bedrooms, bathrooms, url, image_url, images,
                 urgency_tag, latitude, longitude, scraped_at, updated_at
             ) VALUES (
                 :source, :source_id, :title, :property_type, :listing_type,
                 :price_usd, :area_sqm, :price_per_sqm, :province, :district,
-                :commune, :address, :bedrooms, :bathrooms, :url, :image_url,
+                :commune, :address, :bedrooms, :bathrooms, :url, :image_url, :images,
                 :urgency_tag, :latitude, :longitude, :scraped_at, :updated_at
             )
             ON CONFLICT(url) DO UPDATE SET
@@ -134,6 +137,7 @@ def upsert_property(item: Dict[str, Any], db_path: str = DB_PATH) -> bool:
                 commune = COALESCE(excluded.commune, properties.commune),
                 address = COALESCE(excluded.address, properties.address),
                 image_url = COALESCE(excluded.image_url, properties.image_url),
+                images = COALESCE(excluded.images, properties.images),
                 urgency_tag = COALESCE(excluded.urgency_tag, properties.urgency_tag),
                 latitude = COALESCE(excluded.latitude, properties.latitude),
                 longitude = COALESCE(excluded.longitude, properties.longitude),
@@ -155,6 +159,7 @@ def upsert_property(item: Dict[str, Any], db_path: str = DB_PATH) -> bool:
             "bathrooms": item.get("bathrooms"),
             "url": item.get("url"),
             "image_url": item.get("image_url", ""),
+            "images": json.dumps(item.get("images")) if item.get("images") else None,
             "urgency_tag": item.get("urgency_tag", ""),
             "latitude": item.get("latitude"),
             "longitude": item.get("longitude"),
@@ -194,12 +199,12 @@ def upsert_properties_batch(items: List[Dict[str, Any]], db_path: str = DB_PATH)
                     INSERT INTO properties (
                         source, source_id, title, property_type, listing_type,
                         price_usd, area_sqm, price_per_sqm, province, district,
-                        commune, address, bedrooms, bathrooms, url, image_url,
+                        commune, address, bedrooms, bathrooms, url, image_url, images,
                         urgency_tag, latitude, longitude, scraped_at, updated_at
                     ) VALUES (
                         :source, :source_id, :title, :property_type, :listing_type,
                         :price_usd, :area_sqm, :price_per_sqm, :province, :district,
-                        :commune, :address, :bedrooms, :bathrooms, :url, :image_url,
+                        :commune, :address, :bedrooms, :bathrooms, :url, :image_url, :images,
                         :urgency_tag, :latitude, :longitude, :scraped_at, :updated_at
                     )
                     ON CONFLICT(url) DO UPDATE SET
@@ -212,6 +217,7 @@ def upsert_properties_batch(items: List[Dict[str, Any]], db_path: str = DB_PATH)
                         commune = COALESCE(excluded.commune, properties.commune),
                         address = COALESCE(excluded.address, properties.address),
                         image_url = COALESCE(excluded.image_url, properties.image_url),
+                        images = COALESCE(excluded.images, properties.images),
                         urgency_tag = COALESCE(excluded.urgency_tag, properties.urgency_tag),
                         latitude = COALESCE(excluded.latitude, properties.latitude),
                         longitude = COALESCE(excluded.longitude, properties.longitude),
@@ -233,6 +239,7 @@ def upsert_properties_batch(items: List[Dict[str, Any]], db_path: str = DB_PATH)
                     "bathrooms": item.get("bathrooms"),
                     "url": item.get("url"),
                     "image_url": item.get("image_url", ""),
+                    "images": json.dumps(item.get("images")) if item.get("images") else None,
                     "urgency_tag": item.get("urgency_tag", ""),
                     "latitude": item.get("latitude"),
                     "longitude": item.get("longitude"),

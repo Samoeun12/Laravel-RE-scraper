@@ -143,5 +143,6 @@ class HarborScraper(BaseScraper):
             bathrooms=h.get("BathRoom"),
             url=url,
             image_url=h.get("ImgUrl", ""),
+            images=[h.get("ImgUrl")] if h.get("ImgUrl") else [],
             urgency_tag=extract_urgency_tag(title)
         )

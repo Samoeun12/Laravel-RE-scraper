@@ -262,10 +262,16 @@ class RealestateScraper(BaseScraper):
 
         images = it.get("images", [])
         image_url = ""
-        if images and isinstance(images, list) and images:
-            image_url = images[0].get("url", "")
-            if not image_url and images[0].get("thumbnails"):
-                image_url = images[0]["thumbnails"][-1].get("url", "")
+        images_list = []
+        if images and isinstance(images, list):
+            for img in images:
+                u = img.get("url")
+                if not u and img.get("thumbnails"):
+                    u = img["thumbnails"][-1].get("url")
+                if u:
+                    images_list.append(u)
+        if images_list:
+            image_url = images_list[0]
 
         # Pricing & unit rate normalization
         price, pp_sqm, listing_type = normalize_pricing_and_unit(
@@ -294,6 +300,7 @@ class RealestateScraper(BaseScraper):
             bathrooms=bathrooms,
             url=url,
             image_url=image_url,
+            images=images_list,
             urgency_tag=urgency_tag,
             latitude=lat,
             longitude=lon

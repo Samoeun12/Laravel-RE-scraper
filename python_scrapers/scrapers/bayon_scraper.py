@@ -230,6 +230,7 @@ class BayonScraper(BaseScraper):
             bathrooms=bathrooms,
             url=web_url,
             image_url=image_url,
+            images=url_list,
             urgency_tag=urgency,
             latitude=lat,
             longitude=lng

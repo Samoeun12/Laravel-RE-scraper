@@ -304,6 +304,26 @@ class Khmer24Scraper(BaseScraper):
                         url = p_raw.get("link") or f"https://www.khmer24.com/post-adid-{pid}"
                         thumb = p_raw.get("thumbnail") or (p_raw.get("photos", [None])[0]) or ""
 
+                        # Extract multi-photo gallery
+                        images_list = []
+                        photos_raw = p_raw.get("photos") or []
+                        if isinstance(photos_raw, list):
+                            for p_img in photos_raw:
+                                if isinstance(p_img, str) and p_img.strip():
+                                    images_list.append(p_img.strip())
+                                elif isinstance(p_img, dict) and p_img.get("url"):
+                                    images_list.append(p_img["url"].strip())
+
+                        if not images_list:
+                            thumbs_raw = p_raw.get("thumbnails") or []
+                            if isinstance(thumbs_raw, list):
+                                for t_img in thumbs_raw:
+                                    if isinstance(t_img, str) and t_img.strip():
+                                        images_list.append(t_img.strip())
+
+                        if not images_list and thumb:
+                            images_list = [thumb]
+
                         item = PropertyItem(
                             source="khmer24",
                             source_id=pid,
@@ -321,6 +341,7 @@ class Khmer24Scraper(BaseScraper):
                             bathrooms=bathrooms,
                             url=url,
                             image_url=thumb,
+                            images=images_list,
                             urgency_tag=extract_urgency_tag(f"{title} {desc_text}")
                         )
                         page_items_to_resolve.append((item, desc_text))

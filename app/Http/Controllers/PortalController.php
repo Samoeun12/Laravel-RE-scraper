@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
@@ -239,7 +240,12 @@ class PortalController extends Controller
             $query->where('status', $status);
         }
 
-        $properties = $query->latest('id')->paginate(15)->withQueryString();
+        $perPage = (int) $request->input('per_page', 12);
+        if (!in_array($perPage, [12, 24, 36, 48])) {
+            $perPage = 12;
+        }
+
+        $properties = $query->latest('id')->paginate($perPage)->withQueryString();
         $scrapers = ScraperTask::all();
         $provinces = Property::whereNotNull('province')->distinct()->pluck('province')->take(12);
         $propertyTypes = Property::whereNotNull('property_type')->distinct()->pluck('property_type');
@@ -412,7 +418,7 @@ class PortalController extends Controller
                 'bathrooms' => $item->bathrooms ? (int) $item->bathrooms : null,
                 'lat' => round((float) $item->latitude, 5),
                 'lng' => round((float) $item->longitude, 5),
-                'image' => $item->image_url ?: $defaultImg,
+                'image' => Property::formatDisplayImageUrl($item->image_url),
                 'url' => $item->url ?: '',
                 'source' => $item->source,
                 'source_name' => $item->source_name ?: 'Portal',
@@ -671,6 +677,47 @@ class PortalController extends Controller
         ]);
 
         return back()->with('info', 'Property "' . $title . '" has been removed.');
+    }
+
+    /**
+     * API endpoint returning full JSON details for a single property modal.
+     */
+    public function propertyDetailsApi($id)
+    {
+        $property = Property::findOrFail($id);
+
+        return response()->json([
+            'id' => $property->id,
+            'title' => $property->title,
+            'source' => $property->source,
+            'source_name' => $property->source_name,
+            'source_id' => $property->source_id,
+            'property_type' => $property->property_type,
+            'listing_type' => $property->listing_type,
+            'price' => $property->effective_price,
+            'formatted_price' => $property->formatted_price,
+            'computed_price_per_sqm' => $property->computed_price_per_sqm,
+            'formatted_price_per_sqm' => $property->computed_price_per_sqm ? '$' . number_format($property->computed_price_per_sqm, 0) . '/m²' : null,
+            'currency' => $property->currency ?? 'USD',
+            'area_sqm' => $property->area_sqm ? number_format($property->area_sqm, 1) : null,
+            'bedrooms' => $property->bedrooms,
+            'bathrooms' => $property->bathrooms,
+            'location' => $property->display_location,
+            'address' => $property->address,
+            'commune' => $property->commune,
+            'district' => $property->district,
+            'province' => $property->province,
+            'city' => $property->city,
+            'latitude' => $property->latitude,
+            'longitude' => $property->longitude,
+            'image_url' => $property->display_image_url,
+            'images' => $property->gallery_images,
+            'urgency_tag' => $property->urgency_tag,
+            'status' => ucfirst($property->status ?? 'available'),
+            'url' => $property->url ?: $property->source_url,
+            'created_at' => $property->created_at ? $property->created_at->format('M d, Y') : null,
+            'updated_at' => $property->updated_at ? $property->updated_at->format('M d, Y') : null,
+        ]);
     }
 
     /**
@@ -1082,5 +1129,74 @@ class PortalController extends Controller
         ]);
 
         return back()->with('info', "Role '{$name}' has been deleted.");
+    }
+
+    /**
+     * Reliable Image Proxy.
+     * Prevents browser ERR_QUIC_PROTOCOL_ERROR, CORS, and hotlink issues with external real estate CDNs (e.g. synassets).
+     */
+    public function proxyImage(Request $request)
+    {
+        $url = $request->query('url');
+        if (!$url) {
+            return redirect('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80');
+        }
+
+        // Support base64 encoded URLs if passed
+        if (!str_starts_with($url, 'http://') && !str_starts_with($url, 'https://')) {
+            $decoded = base64_decode($url, true);
+            if ($decoded && (str_starts_with($decoded, 'http://') || str_starts_with($decoded, 'https://'))) {
+                $url = $decoded;
+            }
+        }
+
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return redirect('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80');
+        }
+
+        $cacheDir = storage_path('app/public/image_cache');
+        if (!is_dir($cacheDir)) {
+            mkdir($cacheDir, 0755, true);
+        }
+        $cacheFile = $cacheDir . '/' . md5($url) . '.jpg';
+
+        if (file_exists($cacheFile) && filesize($cacheFile) > 0) {
+            return response()->file($cacheFile, [
+                'Content-Type' => 'image/jpeg',
+                'Cache-Control' => 'public, max-age=2592000, immutable',
+            ]);
+        }
+
+        try {
+            $referer = 'https://arc.com.kh/';
+            if (str_contains($url, 'realestate.com.kh')) {
+                $referer = 'https://www.realestate.com.kh/';
+            } elseif (str_contains($url, 'harbor-property')) {
+                $referer = 'https://www.harbor-property.com/';
+            } elseif (str_contains($url, 'c21.com.kh') || str_contains($url, 'cambodia-realestate')) {
+                $referer = 'https://c21.com.kh/';
+            } elseif (str_contains($url, 'propnex')) {
+                $referer = 'https://propnexkh.com/';
+            }
+
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+                'Accept' => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                'Referer' => $referer,
+            ])->timeout(12)->get($url);
+
+            if ($response->successful() && strlen($response->body()) > 500) {
+                file_put_contents($cacheFile, $response->body());
+                $contentType = $response->header('Content-Type') ?: 'image/jpeg';
+                return response($response->body(), 200, [
+                    'Content-Type' => $contentType,
+                    'Cache-Control' => 'public, max-age=2592000, immutable',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Log or fallback
+        }
+
+        return redirect('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80');
     }
 }

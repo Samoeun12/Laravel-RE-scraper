@@ -322,6 +322,7 @@ class ArcScraper(BaseScraper):
                 bathrooms=bathrooms,
                 url=item_url,
                 image_url=img,
+                images=[img] if img else [],
                 urgency_tag=extract_urgency_tag(f"{title} {address}"),
                 latitude=lat,
                 longitude=lng

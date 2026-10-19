@@ -350,6 +350,7 @@ class CambodiaReScraper(BaseScraper):
             bathrooms=bathrooms,
             url=url,
             image_url=image_url,
+            images=[image_url] if image_url else [],
             urgency_tag=urgency_tag,
             latitude=latitude,
             longitude=longitude

@@ -143,6 +143,7 @@ class PropertyItem:
     bathrooms: Optional[int] = None
     url: Optional[str] = ""
     image_url: Optional[str] = ""
+    images: Optional[List[str]] = None
     urgency_tag: Optional[str] = ""
     latitude: Optional[float] = None
     longitude: Optional[float] = None

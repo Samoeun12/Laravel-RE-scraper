@@ -89,6 +89,42 @@ class RealEstateScraperService
 
                 $totalPages = (int) ($response->header('x-wp-totalpages') ?? 1);
 
+                // Batch resolve gallery media IDs for all posts on this page
+                $mediaMap = [];
+                $allMediaIds = [];
+                foreach ($posts as $pItem) {
+                    $gids = $pItem['property_meta']['fave_property_images'] ?? [];
+                    if (is_array($gids)) {
+                        foreach ($gids as $gid) {
+                            if ($gid && is_numeric($gid)) {
+                                $allMediaIds[] = (int) $gid;
+                            }
+                        }
+                    }
+                }
+                $allMediaIds = array_unique($allMediaIds);
+                if (!empty($allMediaIds)) {
+                    $chunks = array_chunk($allMediaIds, 50);
+                    foreach ($chunks as $chunk) {
+                        try {
+                            $includeStr = implode(',', $chunk);
+                            $mediaRes = Http::withHeaders([
+                                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/133.0.0.0',
+                                'Accept' => 'application/json',
+                            ])->timeout(12)->get("https://cambodia-real-estate.com/wp-json/wp/v2/media?include={$includeStr}&per_page=50");
+                            if ($mediaRes->successful()) {
+                                foreach ($mediaRes->json() as $m) {
+                                    if (!empty($m['id']) && !empty($m['source_url'])) {
+                                        $mediaMap[$m['id']] = $m['source_url'];
+                                    }
+                                }
+                            }
+                        } catch (\Throwable $me) {
+                            // Non-fatal, continue with featured media
+                        }
+                    }
+                }
+
                 foreach ($posts as $post) {
                 $pid = (string) ($post['id'] ?? '');
                 $rawTitle = html_entity_decode($post['title']['rendered'] ?? 'Century 21 Listing');
@@ -124,10 +160,26 @@ class RealEstateScraperService
                 $lat = !empty($pm['fave_property_location'][0]) ? (float) explode(',', $pm['fave_property_location'][0])[0] : null;
                 $lng = !empty($pm['fave_property_location'][0]) && count(explode(',', $pm['fave_property_location'][0])) > 1 ? (float) explode(',', $pm['fave_property_location'][0])[1] : null;
 
-                // Image
+                // Image & Multi-Image Gallery
                 $imageUrl = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80';
                 if (!empty($post['_embedded']['wp:featuredmedia'][0]['source_url'])) {
                     $imageUrl = $post['_embedded']['wp:featuredmedia'][0]['source_url'];
+                }
+
+                $imagesList = [];
+                if (!empty($imageUrl) && !str_contains($imageUrl, 'unsplash.com')) {
+                    $imagesList[] = $imageUrl;
+                }
+                $gids = $pm['fave_property_images'] ?? [];
+                if (is_array($gids)) {
+                    foreach ($gids as $gid) {
+                        if (isset($mediaMap[$gid]) && !in_array($mediaMap[$gid], $imagesList)) {
+                            $imagesList[] = $mediaMap[$gid];
+                        }
+                    }
+                }
+                if (empty($imagesList) && $imageUrl) {
+                    $imagesList = [$imageUrl];
                 }
 
                 // Property type
@@ -164,6 +216,7 @@ class RealEstateScraperService
                         'latitude' => $lat,
                         'longitude' => $lng,
                         'image_url' => $imageUrl,
+                        'images' => $imagesList,
                         'status' => 'available',
                         'scraper_task_id' => $task ? $task->id : null,
                     ]
@@ -259,7 +312,7 @@ class RealEstateScraperService
                 $area = !empty($p['land_area']) ? (float) $p['land_area'] : (!empty($p['floor_area']) ? (float) $p['floor_area'] : null);
                 $sqmPrice = ($price && $area && $area > 0) ? round($price / $area, 2) : null;
 
-                $imagePath = $p['main_image'] ?? $p['images'][0] ?? null;
+                $imagePath = $p['property_thumbnail'] ?? $p['thumbnail'] ?? $p['main_image'] ?? $p['images'][0] ?? null;
                 $imageUrl = $imagePath ? (str_starts_with($imagePath, 'http') ? $imagePath : $imageBase . ltrim($imagePath, '/')) : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80';
 
                 $link = "https://arc.com.kh/#/service/buy-sell-rent?id=" . ($p['id'] ?? $propId);
@@ -293,6 +346,7 @@ class RealEstateScraperService
                         'latitude' => !empty($p['latitude']) ? (float) $p['latitude'] : null,
                         'longitude' => !empty($p['longitude']) ? (float) $p['longitude'] : null,
                         'image_url' => $imageUrl,
+                        'images' => $imageUrl ? [$imageUrl] : [],
                         'status' => 'available',
                         'scraper_task_id' => $task ? $task->id : null,
                     ]
@@ -462,7 +516,19 @@ class RealEstateScraperService
                     }
                 }
 
-                $imageUrl = $it['images'][0]['url'] ?? 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80';
+                $rawImages = $it['images'] ?? [];
+                $imagesList = [];
+                if (is_array($rawImages)) {
+                    foreach ($rawImages as $imgObj) {
+                        if (!empty($imgObj['url'])) {
+                            $imagesList[] = $imgObj['url'];
+                        }
+                    }
+                }
+                $imageUrl = !empty($imagesList[0]) ? $imagesList[0] : ($it['images'][0]['url'] ?? 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80');
+                if (empty($imagesList) && $imageUrl) {
+                    $imagesList = [$imageUrl];
+                }
                 $propertyUrl = !empty($it['url']) ? (str_starts_with($it['url'], 'http') ? $it['url'] : 'https://www.realestate.com.kh' . $it['url']) : "https://www.realestate.com.kh/property/{$pid}";
 
                 Property::updateOrCreate(
@@ -488,6 +554,7 @@ class RealEstateScraperService
                         'latitude' => !empty($it['address_latitude']) ? (float) $it['address_latitude'] : null,
                         'longitude' => !empty($it['address_longitude']) ? (float) $it['address_longitude'] : null,
                         'image_url' => $imageUrl,
+                        'images' => $imagesList,
                         'status' => 'available',
                         'scraper_task_id' => $task ? $task->id : null,
                     ]
@@ -576,10 +643,19 @@ class RealEstateScraperService
 
                 $propType = $item['property_type_name'] ?? 'House';
 
-                $imgRel = $item['images'][0]['url'] ?? null;
-                $imageUrl = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80';
-                if ($imgRel) {
-                    $imageUrl = str_starts_with($imgRel, 'http') ? $imgRel : 'https://www.propnexkh.com' . $imgRel;
+                $rawImages = $item['images'] ?? [];
+                $imagesList = [];
+                if (is_array($rawImages)) {
+                    foreach ($rawImages as $imgObj) {
+                        $imgRel = is_array($imgObj) ? ($imgObj['url'] ?? null) : (is_string($imgObj) ? $imgObj : null);
+                        if ($imgRel) {
+                            $imagesList[] = str_starts_with($imgRel, 'http') ? $imgRel : 'https://www.propnexkh.com' . $imgRel;
+                        }
+                    }
+                }
+                $imageUrl = !empty($imagesList[0]) ? $imagesList[0] : 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80';
+                if (empty($imagesList) && $imageUrl) {
+                    $imagesList = [$imageUrl];
                 }
 
                 $propertyUrl = "https://www.propnexkh.com/property/{$pid}";
@@ -609,6 +685,7 @@ class RealEstateScraperService
                         'latitude' => !empty($item['latitude']) ? (float) $item['latitude'] : null,
                         'longitude' => !empty($item['longitude']) ? (float) $item['longitude'] : null,
                         'image_url' => $imageUrl,
+                        'images' => $imagesList,
                         'status' => 'available',
                         'scraper_task_id' => $task ? $task->id : null,
                     ]
@@ -757,6 +834,10 @@ class RealEstateScraperService
                 // Photo URL
                 $urls = $it['urlList'] ?? [];
                 $imageUrl = !empty($urls[0]) ? $urls[0] : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80';
+                $imagesList = is_array($urls) ? array_values(array_filter($urls)) : [];
+                if (empty($imagesList) && $imageUrl) {
+                    $imagesList = [$imageUrl];
+                }
 
                 // High precision GPS coordinates
                 $rawLat = !empty($it['position']['lat']) ? (float) $it['position']['lat'] : (!empty($it['geolocation']['coordinates'][1]) ? (float) $it['geolocation']['coordinates'][1] : null);
@@ -816,6 +897,7 @@ class RealEstateScraperService
                         'latitude' => $lat,
                         'longitude' => $lng,
                         'image_url' => $imageUrl,
+                        'images' => $imagesList,
                         'urgency_tag' => $urgencyTag,
                         'status' => 'available',
                         'scraper_task_id' => $task ? $task->id : null,

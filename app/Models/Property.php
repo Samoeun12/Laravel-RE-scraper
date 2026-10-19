@@ -32,6 +32,7 @@ class Property extends Model
         'url',
         'source_url',
         'image_url',
+        'images',
         'urgency_tag',
         'status',
         'latitude',
@@ -49,6 +50,7 @@ class Property extends Model
         'latitude' => 'float',
         'longitude' => 'float',
         'is_featured' => 'boolean',
+        'images' => 'array',
     ];
 
     public function scraperTask()
@@ -114,5 +116,44 @@ class Property extends Model
             return round($this->effective_price / $this->area_sqm, 2);
         }
         return null;
+    }
+
+    public static function formatDisplayImageUrl(?string $url): string
+    {
+        if (empty($url)) {
+            return 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80';
+        }
+
+        if (
+            str_contains($url, 'synpanel.com') ||
+            str_contains($url, 'synassets') ||
+            str_contains($url, 'realestate.com.kh') ||
+            str_contains($url, 'harbor-property.com') ||
+            str_contains($url, 'c21.com.kh') ||
+            str_contains($url, 'cambodia-realestate.com') ||
+            str_contains($url, 'propnexkh.com') ||
+            str_contains($url, 'bayonapp.com')
+        ) {
+            return '/proxy/image?url=' . urlencode($url);
+        }
+
+        return $url;
+    }
+
+    public function getDisplayImageUrlAttribute(): string
+    {
+        return self::formatDisplayImageUrl($this->image_url);
+    }
+
+    public function getGalleryImagesAttribute(): array
+    {
+        $imgs = $this->images;
+        if (is_array($imgs) && count($imgs) > 0) {
+            return array_values(array_map(function($u) {
+                return is_string($u) ? self::formatDisplayImageUrl($u) : $u;
+            }, array_filter($imgs)));
+        }
+
+        return [$this->display_image_url];
     }
 }

@@ -73,7 +73,7 @@
     @forelse($deals as $item)
         <div class="property-card" style="border: 2px solid rgba(239, 68, 68, 0.35);">
             <div class="property-thumb-wrapper">
-                <img src="{{ $item->image_url ?? 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80' }}" alt="{{ $item->title }}" class="property-thumb" loading="lazy">
+                <img src="{{ $item->display_image_url }}" alt="{{ $item->title }}" class="property-thumb" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'">
                 
                 @if($item->urgency_tag)
                     <span class="property-tag-badge" style="background: var(--danger); color: #fff; font-weight: 800;">
