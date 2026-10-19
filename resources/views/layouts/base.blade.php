@@ -29,8 +29,12 @@
 
     @php
         $isLocalhost = in_array(request()->getHost(), ['127.0.0.1', 'localhost']);
-        $cssUrl = $isLocalhost ? asset('css/portal.css') : secure_asset('css/portal.css');
-        $jsUrl = $isLocalhost ? asset('js/portal.js') : secure_asset('js/portal.js');
+        $cssFile = public_path('css/portal.css');
+        $jsFile = public_path('js/portal.js');
+        $cssVer = file_exists($cssFile) ? filemtime($cssFile) : time();
+        $jsVer = file_exists($jsFile) ? filemtime($jsFile) : time();
+        $cssUrl = ($isLocalhost ? asset('css/portal.css') : secure_asset('css/portal.css')) . '?v=' . $cssVer;
+        $jsUrl = ($isLocalhost ? asset('js/portal.js') : secure_asset('js/portal.js')) . '?v=' . $jsVer;
     @endphp
 
     <!-- Portal CSS -->

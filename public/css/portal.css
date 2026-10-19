@@ -2305,6 +2305,13 @@ img {
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 1.5rem;
     padding-bottom: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.prop-modal-tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .prop-tab-btn {
@@ -2319,6 +2326,8 @@ img {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
     transition: all var(--transition-fast);
     border-radius: 6px 6px 0 0;
 }
@@ -2463,13 +2472,17 @@ img {
 .prop-modal-footer-bar {
     padding: 1.15rem 2rem;
     border-top: 1px solid var(--border-color);
-    background: rgba(15, 23, 42, 0.9);
+    background: var(--bg-surface-elevated);
     backdrop-filter: blur(16px);
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 0.75rem;
+}
+
+[data-theme="dark"] .prop-modal-footer-bar {
+    background: rgba(15, 23, 42, 0.92);
 }
 
 /* Card hover quick view hint */
@@ -2505,17 +2518,33 @@ img {
 }
 
 @media (max-width: 768px) {
+    .modal-container-property {
+        width: 98%;
+        max-height: 96vh;
+        border-radius: 14px;
+    }
+    .prop-modal-scrollable {
+        padding: 1.25rem 1rem;
+    }
+    .prop-modal-footer-bar {
+        padding: 0.85rem 1rem;
+    }
     .prop-metrics-strip {
         grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
     }
     .prop-details-grid {
         grid-template-columns: 1fr;
     }
+    .prop-financial-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
     .prop-modal-hero {
-        height: 260px;
+        height: 280px;
     }
     .prop-modal-price-tag {
-        font-size: 1.4rem;
+        font-size: 1.35rem;
     }
     .lightbox-nav-btn {
         width: 42px;
@@ -2540,6 +2569,51 @@ img {
     }
     .grid-photo-card {
         height: 120px;
+    }
+}
+
+@media (max-width: 520px) {
+    .prop-modal-top-bar {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+    }
+    .prop-source-pill, .prop-status-live-pill, .prop-id-copy-pill {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+    }
+    .prop-modal-close-btn {
+        width: 32px;
+        height: 32px;
+    }
+    .prop-metrics-strip {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+    .prop-metric-box {
+        padding: 0.75rem;
+        gap: 8px;
+    }
+    .prop-metric-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+    }
+    .prop-metric-box .value {
+        font-size: 0.95rem;
+    }
+    .prop-hero-action-pill {
+        bottom: 65px;
+        right: 12px;
+    }
+    .prop-hero-pill-btn {
+        font-size: 0.725rem;
+        padding: 4px 10px;
+    }
+    .prop-modal-bottom-badges {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
     }
 }
 
